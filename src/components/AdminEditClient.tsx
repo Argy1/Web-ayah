@@ -38,6 +38,7 @@ export default function AdminEditClient({
   initialContent,
   initialJourney,
   initialMemory,
+  posts: initialPosts = []
 }: EditPageProps) {
   const { data: session, status } = useSession()
   const router = useRouter()
