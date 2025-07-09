@@ -33,7 +33,6 @@ interface ProfileProps {
     github: string
     twitter: string
   }
-  dob: string | null
   updatedAt: string
 }
 
@@ -45,7 +44,6 @@ export default function Profile({
   skills,
   contact,
   social,
-  dob,
   updatedAt,
 }: ProfileProps) {
   return (
@@ -120,17 +118,10 @@ export default function Profile({
         </ul>
       </section>
 
-      {/* Tanggal Lahir & Terakhir Update */}
-      <section className="text-sm text-gray-600">
-        {dob && (
-          <div className="flex items-center mb-1">
-            <CalendarIcon className="mr-2" /> Lahir: {new Date(dob).toLocaleDateString()}
-          </div>
-        )}
-        <div className="flex items-center">
-          <CalendarIcon className="mr-2" /> Terakhir diperbarui:{' '}
-          {new Date(updatedAt).toLocaleString()}
-        </div>
+      {/* Terakhir Update */}
+      <section className="text-sm text-gray-600 flex items-center">
+        <CalendarIcon className="mr-2" /> Terakhir diperbarui:{' '}
+        {new Date(updatedAt).toLocaleString()}
       </section>
     </div>
   )
@@ -181,8 +172,7 @@ export const getServerSideProps: GetServerSideProps<ProfileProps> = async () => 
     twitter: typeof contactObj.twitter === 'string' ? contactObj.twitter : '',
   }
 
-  // dob + updatedAt
-  const dob = data.dob ? data.dob.toISOString() : null
+  // updatedAt
   const updatedAt = data.updatedAt.toISOString()
 
   return {
@@ -194,7 +184,6 @@ export const getServerSideProps: GetServerSideProps<ProfileProps> = async () => 
       skills,
       contact,
       social,
-      dob,
       updatedAt,
     },
   }
