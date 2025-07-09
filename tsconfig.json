@@ -1,3 +1,4 @@
+// tsconfig.json
 {
   "compilerOptions": {
     "target": "ES2017",
@@ -15,8 +16,17 @@
     "incremental": true,
     "paths": {
       "@/*": ["./src/*"]
-    }
+    },
+    // ─── Tambahan untuk deklarasi kustom ────────────────────────────────
+    "typeRoots": ["./src/types", "./node_modules/@types"]
   },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", "prisma/seed.js"],
+  "include": [
+    "next-env.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    "prisma/seed.js",
+    // ─── Pastikan file .d.ts di src/types terbaca ────────────────────
+    "src/types/**/*.d.ts"
+  ],
   "exclude": ["node_modules"]
 }
