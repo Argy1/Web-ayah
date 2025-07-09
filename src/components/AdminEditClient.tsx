@@ -14,6 +14,7 @@ import {
   EditPageProps,
 } from '../types/admin'
 import {
+  BlogIcon,
   Star,
   CameraIcon,
   CheckCircle,
