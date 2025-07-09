@@ -25,7 +25,7 @@ export default function AdminEditClient({
   const { data: session, status } = useSession()
   const router = useRouter()
 
-  // ─── Safe fallbacks ───────────────────────────────────────────────────────
+  // ─── Safe fallbacks so nothing stays undefined ──────────────────────────
   const prof: ProfileData = initialProfile ?? {
     id: 0,
     photo: '',
@@ -40,7 +40,7 @@ export default function AdminEditClient({
   }
 
   const content: PageContentData = initialContent ?? {
-    page: page,
+    page,
     title: '',
     body: '',
     updatedAt: new Date().toISOString(),
@@ -50,7 +50,7 @@ export default function AdminEditClient({
   const memoryList:  MemoryItem[]  = initialMemory  ?? []
   const postsList:   PostItem[]    = initialPosts   ?? []
 
-  // ─── Redirect non-admin ─────────────────────────────────────────────────
+  // ─── Redirect non-admins ───────────────────────────────────────────────
   useEffect(() => {
     if (status === 'authenticated' && (!session || (session.user as any).role !== 'admin')) {
       router.replace('/login')
@@ -60,7 +60,7 @@ export default function AdminEditClient({
   if (status === 'loading') return <p>Loading…</p>
   if (!session || (session.user as any).role !== 'admin') return null
 
-  // ─── PROFILE Hooks ───────────────────────────────────────────────────────
+  // ─── PROFILE Hooks ─────────────────────────────────────────────────────
   const [photoFile,    setPhotoFile]    = useState<File | null>(null)
   const [photoPreview, setPhotoPreview] = useState(prof.photo)
   const [about,        setAbout]        = useState(prof.about)
@@ -73,29 +73,21 @@ export default function AdminEditClient({
   const [social,       setSocial]       = useState(JSON.stringify(prof.social, null, 2))
   const [dob,          setDob]          = useState(prof.dob ?? '')
 
-  // ─── PAGE CONTENT Hooks ─────────────────────────────────────────────────
+  // ─── PAGE CONTENT Hooks ────────────────────────────────────────────────
   const [contentTitle, setContentTitle] = useState(content.title)
   const [contentBody,  setContentBody]  = useState(content.body)
 
-  // ─── JOURNEY Hooks ───────────────────────────────────────────────────────
-  const [journeyItems,   setJourneyItems]   = useState<JourneyItem[]>(journeyList)
-  const [journeyFiles,   setJourneyFiles]   = useState<(File | null)[]>(
-    journeyList.map(() => null)
-  )
-  const [journeyPreviews, setJourneyPreviews] = useState<string[]>(
-    journeyList.map(it => it.image)
-  )
+  // ─── JOURNEY Hooks ─────────────────────────────────────────────────────
+  const [journeyItems,    setJourneyItems]    = useState<JourneyItem[]>(journeyList)
+  const [journeyFiles,    setJourneyFiles]    = useState<(File | null)[]>(journeyList.map(() => null))
+  const [journeyPreviews, setJourneyPreviews] = useState<string[]>(journeyList.map(it => it.image))
 
-  // ─── MEMORY Hooks ────────────────────────────────────────────────────────
+  // ─── MEMORY Hooks ──────────────────────────────────────────────────────
   const [memoryItems,    setMemoryItems]    = useState<MemoryItem[]>(memoryList)
-  const [memoryFiles,    setMemoryFiles]    = useState<(File | null)[]>(
-    memoryList.map(() => null)
-  )
-  const [memoryPreviews, setMemoryPreviews] = useState<string[]>(
-    memoryList.map(m => m.image)
-  )
+  const [memoryFiles,    setMemoryFiles]    = useState<(File | null)[]>(memoryList.map(() => null))
+  const [memoryPreviews, setMemoryPreviews] = useState<string[]>(memoryList.map(m => m.image))
 
-  // ─── HANDLERS ─────────────────────────────────────────────────────────────
+  // ─── HANDLERS ───────────────────────────────────────────────────────────
 
   // Profile
   const onPhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -150,21 +142,21 @@ export default function AdminEditClient({
   }
   const onJourneyFileChange = (idx: number, e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0] ?? null
-    const newFiles = [...journeyFiles]
-    newFiles[idx] = f
+    const newFiles    = [...journeyFiles]
+    newFiles[idx]     = f
     setJourneyFiles(newFiles)
     if (f) {
-      const newPreviews = [...journeyPreviews]
-      newPreviews[idx] = URL.createObjectURL(f)
-      setJourneyPreviews(newPreviews)
+      const newPrev   = [...journeyPreviews]
+      newPrev[idx]    = URL.createObjectURL(f)
+      setJourneyPreviews(newPrev)
     }
   }
   const saveJourneyItem = async (item: JourneyItem, idx: number) => {
     const form = new FormData()
-    form.append('id',       item.id.toString())
-    form.append('order',    item.order.toString())
-    form.append('title',    item.title)
-    form.append('period',   item.period)
+    form.append('id',          item.id.toString())
+    form.append('order',       item.order.toString())
+    form.append('title',       item.title)
+    form.append('period',      item.period)
     form.append('description', item.description)
     if (journeyFiles[idx]) form.append('imageFile', journeyFiles[idx]!)
     else form.append('oldImage', journeyPreviews[idx])
@@ -203,13 +195,13 @@ export default function AdminEditClient({
   }
   const onMemoryFileChange = (idx: number, e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0] ?? null
-    const newFiles = [...memoryFiles]
-    newFiles[idx] = f
+    const newFiles     = [...memoryFiles]
+    newFiles[idx]      = f
     setMemoryFiles(newFiles)
     if (f) {
-      const newPreviews = [...memoryPreviews]
-      newPreviews[idx] = URL.createObjectURL(f)
-      setMemoryPreviews(newPreviews)
+      const newPrev    = [...memoryPreviews]
+      newPrev[idx]     = URL.createObjectURL(f)
+      setMemoryPreviews(newPrev)
     }
   }
   const saveMemoryItem = async (item: MemoryItem, idx: number) => {
@@ -236,7 +228,7 @@ export default function AdminEditClient({
       alert('Gagal menghapus foto.')
     }
   }
-  
+
   // ─── Render by page ───────────────────────────────────────────────────────
   if (page==='profile') {
     return (
