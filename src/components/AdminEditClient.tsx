@@ -35,7 +35,7 @@ export default function AdminEditClient({
   const router = useRouter()
 
   // ─── Default wrappers for possibly-missing fields ────────────────────────
-  const contactData = Required<NonNullable<ProfileData['contact'] {
+  const contactData: Required<NonNullable<ProfileData['contact']>> = {
     location: '',
     phone: '',
     email: '',
