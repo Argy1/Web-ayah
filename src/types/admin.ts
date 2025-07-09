@@ -1,25 +1,23 @@
 // src/types/admin.ts
-export type ExperienceItem = {
-  title: string
-  period: string
-  desc: string
-}
-
-export type ContactInfo = {
-  location: string
-  birth: string
-  phone: string
-  email: string
-  social: { linkedin: string; github: string; twitter: string }
-}
 
 export type ProfileData = {
+  id: number
   photo: string
   about: string
-  education: string[]
-  experience: ExperienceItem[]
-  skills: string[]
-  contact: ContactInfo
+  education: string[]                   // daftar baris teks
+  experience: { title: string; period: string; desc: string }[]
+  skills: string[]                      // daftar kata kunci
+  dob: string | null                    // ISO date string
+  contact: { location: string; phone: string; email: string }
+  social: { linkedin: string; github: string; twitter: string }
+  updatedAt: string                     // ISO date
+}
+
+export type PageContentData = {
+  page: string
+  title: string
+  body: string
+  updatedAt: string                     // ISO date
 }
 
 export type JourneyItem = {
@@ -38,27 +36,29 @@ export type MemoryItem = {
   image: string
 }
 
-export type PageContentData = {
-  page: string
+// Tipe baru untuk blog post
+export type PostItem = {
+  id: number
+  slug: string
   title: string
-  body: string
-}
-
-export interface EditPageProps {
-  page: string
-  initialProfile: ProfileData
-  initialContent: PageContentData
-  initialJourney: JourneyItem[]
-  initialMemory: MemoryItem[]
-  initialBlog:    BlogPost[]         
-}
-
-export interface BlogPost {
-  id:      number
-  slug:    string
-  title:   string
-  date:    string
   excerpt: string
   content: string
-  image:   string
+  image: string
+  date: string                          // ISO date string
+}
+
+export type EditPageProps = {
+  page: 'profile'
+       | 'perjalanan-hidup'
+       | 'galeri-kenangan'
+       | 'blog'
+       | 'pelajaran-hidup'
+       | 'motivasi-inspirasi'
+       | string
+
+  initialProfile?: ProfileData
+  initialContent?: PageContentData
+  initialJourney?: JourneyItem[]
+  initialMemory?: MemoryItem[]
+  initialPosts?: PostItem[]             // jika Anda passing daftar post
 }
