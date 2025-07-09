@@ -4,9 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
-    // Generate Prisma Client setiap kali sebelum build
     "prebuild": "prisma generate",
-    // Pastikan Prisma Client sudah uptodate, kemudian bangun aplikasi
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
@@ -15,7 +13,6 @@
     "prisma:studio": "prisma studio",
     "seed": "node prisma/seed.js",
     "prisma:seed": "node prisma/seed.js",
-    // Juga generate setelah install agar `next dev` & `next start` langsung bisa pakai
     "postinstall": "prisma generate"
   },
   "dependencies": {
