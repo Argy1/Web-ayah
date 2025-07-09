@@ -41,16 +41,14 @@ export default function AdminEditClient({
   const router = useRouter()
 
   // ─── Default wrappers for possibly-missing fields ────────────────────────
-  const contactData: Required<NonNullable<ProfileData['contact']>> = {
-    location: '',
-    phone: '',
-    email: '',
-    linkedin: '',
-    github: '',
-    twitter: '',
-     ...(initialProfile?.contact ?? {}),
-  }
-
+  const contactData: ProfileData['contact'] = {
+  location,
+  phone,
+  email,
+  linkedin,
+  github,
+  twitter,
+}
   // ─── PROFILE state ───────────────────────────────────────────────────────
   const [photoFile, setPhotoFile] = useState<File | null>(null)
   const [photoPreview, setPhotoPreview] = useState<string>(
