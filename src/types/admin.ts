@@ -45,6 +45,7 @@ export interface MemoryItem {
   image: string
    date: string
   location: string
+  isFavorite: boolean
 }
 
 // Props yang dikirimkan ke AdminEditClient
