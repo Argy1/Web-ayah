@@ -2,7 +2,7 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
-import { motion } from 'framer-motion'          // ← Tambahkan ini
+import { motion } from 'framer-motion'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/router'
 import axios from 'axios'
@@ -11,13 +11,17 @@ import {
   PageContentData,
   JourneyItem,
   MemoryItem,
-  PostItem,
   EditPageProps,
 } from '../types/admin'
 import {
   UserCircle2,
   Calendar as CalendarIcon,
-  MapPin,                   // ← Tambahkan ini
+  MapPin,
+  Phone,
+  Mail,
+  Linkedin,
+  Github,
+  Twitter,
 } from 'lucide-react'
 
 export default function AdminEditClient({
@@ -26,75 +30,95 @@ export default function AdminEditClient({
   initialContent,
   initialJourney,
   initialMemory,
-  initialPosts,
 }: EditPageProps) {
   const { data: session, status } = useSession()
   const router = useRouter()
 
-  // ─── Safe fallbacks so nothing stays undefined ──────────────────────────
-  const prof: ProfileData = initialProfile ?? {
-    id: 0,
-    photo: '',
-    about: '',
-    education: [],
-    experience: [],
-    skills: [],
-    dob: null,
-    contact: { location: '', phone: '', email: '' },
-    social: { linkedin: '', github: '', twitter: '' },
-    updatedAt: new Date().toISOString(),
+  // ─── Default wrappers for possibly-missing fields ────────────────────────
+  const contactData = initialProfile?.contact ?? {
+    location: '',
+    phone: '',
+    email: '',
+    linkedin: '',
+    github: '',
+    twitter: '',
   }
 
-  const content: PageContentData = initialContent ?? {
-    page,
-    title: '',
-    body: '',
-    updatedAt: new Date().toISOString(),
-  }
+  // ─── PROFILE state ───────────────────────────────────────────────────────
+  const [photoFile, setPhotoFile] = useState<File | null>(null)
+  const [photoPreview, setPhotoPreview] = useState<string>(
+    initialProfile?.photo ?? ''
+  )
+  const [about, setAbout] = useState<string>(initialProfile?.about ?? '')
+  const [education, setEducation] = useState<string>(
+    (initialProfile?.education ?? []).join('\n')
+  )
+  const [experience, setExperience] = useState<string>(
+    (initialProfile?.experience ?? [])
+      .map((e) => `${e.title}|${e.period}|${e.desc}`)
+      .join('\n')
+  )
+  const [skills, setSkills] = useState<string>(
+    (initialProfile?.skills ?? []).join(',')
+  )
+  const [contactLocation, setContactLocation] = useState<string>(
+    contactData.location
+  )
+  const [contactPhone, setContactPhone] = useState<string>(contactData.phone)
+  const [contactEmail, setContactEmail] = useState<string>(contactData.email)
+  const [contactLinkedin, setContactLinkedin] = useState<string>(
+    contactData.linkedin
+  )
+  const [contactGithub, setContactGithub] = useState<string>(
+    contactData.github
+  )
+  const [contactTwitter, setContactTwitter] = useState<string>(
+    contactData.twitter
+  )
 
-  const journeyList: JourneyItem[] = initialJourney ?? []
-  const memoryList:  MemoryItem[]  = initialMemory  ?? []
-  const postsList:   PostItem[]    = initialPosts   ?? []
+  // ─── PAGE CONTENT state ─────────────────────────────────────────────────
+  const [contentTitle, setContentTitle] = useState<string>(
+    initialContent.title
+  )
+  const [contentBody, setContentBody] = useState<string>(
+    initialContent.body
+  )
 
-  // ─── Redirect non-admins ───────────────────────────────────────────────
+  // ─── JOURNEY state ──────────────────────────────────────────────────────
+  const [journeyItems, setJourneyItems] =
+    useState<JourneyItem[]>(initialJourney)
+  const [journeyFiles, setJourneyFiles] = useState<(File | null)[]>(
+    initialJourney.map(() => null)
+  )
+  const [journeyPreviews, setJourneyPreviews] = useState<string[]>(
+    initialJourney.map((it) => it.image)
+  )
+
+  // ─── MEMORY state ───────────────────────────────────────────────────────
+  const [memoryItems, setMemoryItems] =
+    useState<MemoryItem[]>(initialMemory)
+  const [memoryFiles, setMemoryFiles] = useState<(File | null)[]>(
+    initialMemory.map(() => null)
+  )
+  const [memoryPreviews, setMemoryPreviews] = useState<string[]>(
+    initialMemory.map((m) => m.image)
+  )
+
+  // ─── Redirect non-admin after session load ───────────────────────────────
   useEffect(() => {
-    if (status === 'authenticated' && (!session || (session.user as any).role !== 'admin')) {
+    if (
+      status === 'authenticated' &&
+      (!session || (session.user as any).role !== 'admin')
+    ) {
       router.replace('/login')
     }
   }, [status, session, router])
 
-  if (status === 'loading') return <p>Loading…</p>
+  // ─── Early returns ──────────────────────────────────────────────────────
+  if (status === 'loading') return <p>Loading...</p>
   if (!session || (session.user as any).role !== 'admin') return null
 
-  // ─── PROFILE Hooks ─────────────────────────────────────────────────────
-  const [photoFile,    setPhotoFile]    = useState<File | null>(null)
-  const [photoPreview, setPhotoPreview] = useState(prof.photo)
-  const [about,        setAbout]        = useState(prof.about)
-  const [education,    setEducation]    = useState(prof.education.join('\n'))
-  const [experience,   setExperience]   = useState(
-    prof.experience.map(e => `${e.title}|${e.period}|${e.desc}`).join('\n')
-  )
-  const [skills,       setSkills]       = useState(prof.skills.join(','))
-  const [contact,      setContact]      = useState(JSON.stringify(prof.contact, null, 2))
-  const [social,       setSocial]       = useState(JSON.stringify(prof.social, null, 2))
-  const [dob,          setDob]          = useState(prof.dob ?? '')
-
-  // ─── PAGE CONTENT Hooks ────────────────────────────────────────────────
-  const [contentTitle, setContentTitle] = useState(content.title)
-  const [contentBody,  setContentBody]  = useState(content.body)
-
-  // ─── JOURNEY Hooks ─────────────────────────────────────────────────────
-  const [journeyItems,    setJourneyItems]    = useState<JourneyItem[]>(journeyList)
-  const [journeyFiles,    setJourneyFiles]    = useState<(File | null)[]>(journeyList.map(() => null))
-  const [journeyPreviews, setJourneyPreviews] = useState<string[]>(journeyList.map(it => it.image))
-
-  // ─── MEMORY Hooks ──────────────────────────────────────────────────────
-  const [memoryItems,    setMemoryItems]    = useState<MemoryItem[]>(memoryList)
-  const [memoryFiles,    setMemoryFiles]    = useState<(File | null)[]>(memoryList.map(() => null))
-  const [memoryPreviews, setMemoryPreviews] = useState<string[]>(memoryList.map(m => m.image))
-
-  // ─── HANDLERS ───────────────────────────────────────────────────────────
-
+  // ─── HANDLERS ──────────────────────────────────────────────────────────
   // Profile
   const onPhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0] ?? null
@@ -109,9 +133,12 @@ export default function AdminEditClient({
     form.append('education', education)
     form.append('experience', experience)
     form.append('skills', skills)
-    form.append('contact', contact)
-    form.append('social', social)
-    form.append('dob', dob)
+    form.append('location', contactLocation)
+    form.append('phone', contactPhone)
+    form.append('email', contactEmail)
+    form.append('linkedin', contactLinkedin)
+    form.append('github', contactGithub)
+    form.append('twitter', contactTwitter)
 
     await axios.post('/api/profile', form, {
       headers: { 'Content-Type': 'multipart/form-data' },
@@ -123,7 +150,7 @@ export default function AdminEditClient({
   // Page content
   const saveContent = async () => {
     await axios.post('/api/content', {
-      page: content.page,
+      page: initialContent.page,
       title: contentTitle,
       body: contentBody,
     })
@@ -146,23 +173,26 @@ export default function AdminEditClient({
     arr[idx][field] = value
     setJourneyItems(arr)
   }
-  const onJourneyFileChange = (idx: number, e: React.ChangeEvent<HTMLInputElement>) => {
+  const onJourneyFileChange = (
+    idx: number,
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
     const f = e.target.files?.[0] ?? null
-    const newFiles    = [...journeyFiles]
-    newFiles[idx]     = f
+    const newFiles = [...journeyFiles]
+    newFiles[idx] = f
     setJourneyFiles(newFiles)
     if (f) {
-      const newPrev   = [...journeyPreviews]
-      newPrev[idx]    = URL.createObjectURL(f)
-      setJourneyPreviews(newPrev)
+      const newPreviews = [...journeyPreviews]
+      newPreviews[idx] = URL.createObjectURL(f)
+      setJourneyPreviews(newPreviews)
     }
   }
   const saveJourneyItem = async (item: JourneyItem, idx: number) => {
     const form = new FormData()
-    form.append('id',          item.id.toString())
-    form.append('order',       item.order.toString())
-    form.append('title',       item.title)
-    form.append('period',      item.period)
+    form.append('id', item.id.toString())
+    form.append('order', item.order.toString())
+    form.append('title', item.title)
+    form.append('period', item.period)
     form.append('description', item.description)
     if (journeyFiles[idx]) form.append('imageFile', journeyFiles[idx]!)
     else form.append('oldImage', journeyPreviews[idx])
@@ -199,20 +229,23 @@ export default function AdminEditClient({
     arr[idx][field] = value
     setMemoryItems(arr)
   }
-  const onMemoryFileChange = (idx: number, e: React.ChangeEvent<HTMLInputElement>) => {
+  const onMemoryFileChange = (
+    idx: number,
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
     const f = e.target.files?.[0] ?? null
-    const newFiles     = [...memoryFiles]
-    newFiles[idx]      = f
+    const newFiles = [...memoryFiles]
+    newFiles[idx] = f
     setMemoryFiles(newFiles)
     if (f) {
-      const newPrev    = [...memoryPreviews]
-      newPrev[idx]     = URL.createObjectURL(f)
-      setMemoryPreviews(newPrev)
+      const newPreviews = [...memoryPreviews]
+      newPreviews[idx] = URL.createObjectURL(f)
+      setMemoryPreviews(newPreviews)
     }
   }
   const saveMemoryItem = async (item: MemoryItem, idx: number) => {
     const form = new FormData()
-    form.append('id',    item.id.toString())
+    form.append('id', item.id.toString())
     form.append('order', item.order.toString())
     form.append('label', item.label)
     if (memoryFiles[idx]) form.append('imageFile', memoryFiles[idx]!)
@@ -236,143 +269,149 @@ export default function AdminEditClient({
   }
 
   // ─── Render by page ───────────────────────────────────────────────────────
-  if (page==='profile') {
+  if (page === 'profile') {
     return (
-      <motion.div initial={{opacity:0,y:20}} animate={{opacity:1,y:0}}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
         className="max-w-3xl mx-auto p-8 bg-white dark:bg-gray-900 rounded shadow"
       >
         <h1 className="text-2xl font-bold mb-4 flex items-center">
-          <UserCircle2 className="mr-2 text-indigo-500"/> Edit Profil
+          <UserCircle2 className="mr-2 text-indigo-500" /> Edit Profil
         </h1>
-        {/* Photo */}
+
+        {/* Foto */}
         <div className="mb-4">
           <label className="block mb-1">Foto Profil</label>
-          <input type="file" accept="image/*" onChange={onPhotoChange}/>
+          <input type="file" accept="image/*" onChange={onPhotoChange} />
           {photoPreview && (
-            <img src={photoPreview} alt="Preview"
-              className="mt-2 w-24 h-24 object-cover rounded-full border"
+            <img
+              src={photoPreview}
+              alt="Preview"
+              className="mt-2 w-32 h-32 object-cover rounded-full"
             />
           )}
         </div>
-        {/* About */}
+
+        {/* Tentang Saya */}
         <div className="mb-4">
           <label className="block mb-1">Tentang Saya</label>
           <textarea
-            rows={4} value={about}
-            onChange={e=>setAbout(e.target.value)}
-            className="w-full p-2 border rounded"
+            rows={4}
+            value={about}
+            onChange={(e) => setAbout(e.target.value)}
+            className="w-full p-2 border rounded dark:bg-gray-700"
           />
         </div>
-        {/* Education */}
+
+        {/* Pendidikan */}
         <div className="mb-4">
-          <label className="block mb-1">Pendidikan (baris per item)</label>
+          <label className="block mb-1">Pendidikan (per baris)</label>
           <textarea
-            rows={3} value={education}
-            onChange={e=>setEducation(e.target.value)}
-            className="w-full p-2 border rounded"
+            rows={4}
+            value={education}
+            onChange={(e) => setEducation(e.target.value)}
+            className="w-full p-2 border rounded dark:bg-gray-700"
           />
         </div>
-        {/* Experience */}
+
+        {/* Pengalaman */}
         <div className="mb-4">
-          <label className="block mb-1">Pengalaman (judul|periode|desc)</label>
+          <label className="block mb-1">
+            Pengalaman (judul|periode|deskripsi per baris)
+          </label>
           <textarea
-            rows={4} value={experience}
-            onChange={e=>setExperience(e.target.value)}
-            className="w-full p-2 border rounded"
+            rows={6}
+            value={experience}
+            onChange={(e) => setExperience(e.target.value)}
+            className="w-full p-2 border rounded dark:bg-gray-700"
           />
         </div>
-        {/* Skills */}
+
+        {/* Keahlian */}
         <div className="mb-4">
-          <label className="block mb-1">Keahlian (pisah koma)</label>
+          <label className="block mb-1">Keahlian (dipisah koma)</label>
           <input
-            type="text" value={skills}
-            onChange={e=>setSkills(e.target.value)}
-            className="w-full p-2 border rounded"
+            type="text"
+            value={skills}
+            onChange={(e) => setSkills(e.target.value)}
+            className="w-full p-2 border rounded dark:bg-gray-700"
           />
         </div>
-        {/* DOB */}
+
+        {/* Kontak */}
         <div className="mb-4">
           <label className="block mb-1 flex items-center">
-            <CalendarIcon className="mr-1 text-indigo-500"/> Tanggal Lahir
+            <MapPin className="mr-1 text-indigo-500" /> Lokasi
           </label>
           <input
-            type="date" value={dob}
-            onChange={e=>setDob(e.target.value)}
-            className="p-2 border rounded"
+            type="text"
+            value={contactLocation}
+            onChange={(e) => setContactLocation(e.target.value)}
+            className="w-full p-2 border rounded"
           />
         </div>
-        {/* Contact */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-          <div>
-            <label className="block mb-1 flex items-center">
-              <MapPin className="mr-1 text-indigo-500"/> Lokasi
-            </label>
-            <input
-              type="text" value={location}
-              onChange={e=>setLocation(e.target.value)}
-              className="w-full p-2 border rounded"
-            />
-          </div>
-          <div>
-            <label className="block mb-1 flex items-center">
-              <Phone className="mr-1 text-indigo-500"/> Telepon
-            </label>
-            <input
-              type="tel" value={phone}
-              onChange={e=>setPhone(e.target.value)}
-              className="w-full p-2 border rounded"
-            />
-          </div>
-          <div>
-            <label className="block mb-1 flex items-center">
-              <Mail className="mr-1 text-indigo-500"/> Email
-            </label>
-            <input
-              type="email" value={email}
-              onChange={e=>setEmail(e.target.value)}
-              className="w-full p-2 border rounded"
-            />
-          </div>
+        <div className="mb-4">
+          <label className="block mb-1 flex items-center">
+            <Phone className="mr-1 text-indigo-500" /> Telepon
+          </label>
+          <input
+            type="text"
+            value={contactPhone}
+            onChange={(e) => setContactPhone(e.target.value)}
+            className="w-full p-2 border rounded"
+          />
         </div>
-        {/* Social */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-          <div>
-            <label className="block mb-1 flex items-center">
-              <LinkedinIcon className="mr-1 text-indigo-500"/> LinkedIn
-            </label>
-            <input
-              type="url" value={linkedin}
-              onChange={e=>setLinkedin(e.target.value)}
-              className="w-full p-2 border rounded"
-            />
-          </div>
-          <div>
-            <label className="block mb-1 flex items-center">
-              <GithubIcon className="mr-1 text-indigo-500"/> GitHub
-            </label>
-            <input
-              type="url" value={github}
-              onChange={e=>setGithub(e.target.value)}
-              className="w-full p-2 border rounded"
-            />
-          </div>
-          <div>
-            <label className="block mb-1 flex items-center">
-              <TwitterIcon className="mr-1 text-indigo-500"/> Twitter
-            </label>
-            <input
-              type="url" value={twitter}
-              onChange={e=>setTwitter(e.target.value)}
-              className="w-full p-2 border rounded"
-            />
-          </div>
+        <div className="mb-4">
+          <label className="block mb-1 flex items-center">
+            <Mail className="mr-1 text-indigo-500" /> Email
+          </label>
+          <input
+            type="email"
+            value={contactEmail}
+            onChange={(e) => setContactEmail(e.target.value)}
+            className="w-full p-2 border rounded"
+          />
         </div>
-        {/* Save */}
+        <div className="mb-4">
+          <label className="block mb-1 flex items-center">
+            <Linkedin className="mr-1 text-indigo-500" /> LinkedIn
+          </label>
+          <input
+            type="text"
+            value={contactLinkedin}
+            onChange={(e) => setContactLinkedin(e.target.value)}
+            className="w-full p-2 border rounded"
+          />
+        </div>
+        <div className="mb-4">
+          <label className="block mb-1 flex items-center">
+            <Github className="mr-1 text-indigo-500" /> GitHub
+          </label>
+          <input
+            type="text"
+            value={contactGithub}
+            onChange={(e) => setContactGithub(e.target.value)}
+            className="w-full p-2 border rounded"
+          />
+        </div>
+        <div className="mb-4">
+          <label className="block mb-1 flex items-center">
+            <Twitter className="mr-1 text-indigo-500" /> Twitter
+          </label>
+          <input
+            type="text"
+            value={contactTwitter}
+            onChange={(e) => setContactTwitter(e.target.value)}
+            className="w-full p-2 border rounded"
+          />
+        </div>
+
         <button
           onClick={saveProfile}
-          className="px-6 py-2 bg-indigo-600 text-white rounded flex items-center hover:bg-indigo-700"
+          className="px-6 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700"
         >
-          <Save className="mr-2"/> Simpan Profil
+          Simpan Profil
         </button>
       </motion.div>
     )
