@@ -44,6 +44,7 @@ export interface MemoryItem {
   label: string
   image: string
    date: string
+  location: string
 }
 
 // Props yang dikirimkan ke AdminEditClient
