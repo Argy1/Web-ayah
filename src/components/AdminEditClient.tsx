@@ -109,6 +109,9 @@ export default function AdminEditClient({
   const [memoryPreviews, setMemoryPreviews] = useState<string[]>(
     initialMemory.map((m) => m.image)
   )
+  const [memoryDates, setMemoryDates] = useState<string[]>(
+  initialMemory.map((m) => m.date)
+  )
 
   // ─── Redirect non-admin after session load ───────────────────────────────
   useEffect(() => {
@@ -224,10 +227,17 @@ export default function AdminEditClient({
   const addMemory = () => {
     setMemoryItems([
       ...memoryItems,
-      { id: 0, order: memoryItems.length + 1, label: '', image: '' },
+      {
+        id: 0,
+        order: memoryItems.length + 1,
+        label: '',
+        image: '',
+        date: '',            
+      },
     ])
     setMemoryFiles([...memoryFiles, null])
     setMemoryPreviews([...memoryPreviews, ''])
+    setMemoryDates([...memoryDates, ''])
   }
   const updateMemory = (idx: number, field: keyof MemoryItem, value: any) => {
     const arr = [...memoryItems]
