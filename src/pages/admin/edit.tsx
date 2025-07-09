@@ -16,16 +16,15 @@ import {
 export const getServerSideProps: GetServerSideProps<EditPageProps> = async (
   ctx
 ) => {
-  // 1) Cek session + role
+  // 1) cek session + role
   const session = await getServerSession(ctx.req, ctx.res, authOptions)
   if (!session || (session.user as any).role !== 'admin') {
     return { redirect: { destination: '/login', permanent: false } }
   }
 
-  // 2) Ambil profil
+  // 2) ambil profil
   const rawProfile = await prisma.profile.findFirst()
   if (!rawProfile) {
-    // Kalau belum ada profil, kirim default kosong
     return {
       props: {
         page: 'profile',
@@ -53,19 +52,30 @@ export const getServerSideProps: GetServerSideProps<EditPageProps> = async (
     }
   }
 
-  // 3) Parse contact JSON
+  // 3) normalize education & skills & experience
+  const education: string[] = Array.isArray(rawProfile.education)
+    ? rawProfile.education.filter((v): v is string => typeof v === 'string')
+    : []
+  const skills: string[] = Array.isArray(rawProfile.skills)
+    ? rawProfile.skills.filter((v): v is string => typeof v === 'string')
+    : []
+  const experience = Array.isArray(rawProfile.experience)
+    ? (rawProfile.experience as any[]).map((e) => ({
+        title: typeof e.title === 'string' ? e.title : '',
+        period: typeof e.period === 'string' ? e.period : '',
+        desc: typeof e.desc === 'string' ? e.desc : '',
+      }))
+    : []
+
+  // 4) parse contact JSON
   const contactRaw = (rawProfile.contact as Record<string, string>) || {}
   const initialProfile: ProfileData = {
     id: rawProfile.id,
     photo: rawProfile.photo,
     about: rawProfile.about,
-    education: Array.isArray(rawProfile.education)
-      ? rawProfile.education
-      : [],
-    experience: Array.isArray(rawProfile.experience)
-      ? rawProfile.experience
-      : [],
-    skills: Array.isArray(rawProfile.skills) ? rawProfile.skills : [],
+    education,
+    experience,
+    skills,
     contact: {
       location: contactRaw.location ?? '',
       phone: contactRaw.phone ?? '',
@@ -76,7 +86,7 @@ export const getServerSideProps: GetServerSideProps<EditPageProps> = async (
     },
   }
 
-  // 4) Ambil page content
+  // 5) ambil page content
   const rawContent = await prisma.pageContent.findUnique({
     where: { page: 'profile' },
   })
@@ -86,7 +96,7 @@ export const getServerSideProps: GetServerSideProps<EditPageProps> = async (
     body: rawContent?.body ?? '',
   }
 
-  // 5) Ambil perjalanan hidup
+  // 6) perjalanan hidup
   const journeyRaw = await prisma.journeyItem.findMany({
     orderBy: { order: 'asc' },
   })
@@ -99,7 +109,7 @@ export const getServerSideProps: GetServerSideProps<EditPageProps> = async (
     image: it.image,
   }))
 
-  // 6) Ambil galeri kenangan
+  // 7) galeri kenangan
   const memoryRaw = await prisma.memoryItem.findMany({
     orderBy: { order: 'asc' },
   })
@@ -114,7 +124,7 @@ export const getServerSideProps: GetServerSideProps<EditPageProps> = async (
     image: it.image,
   }))
 
-  // 7) Ambil blog posts
+  // 8) blog posts
   const postsRaw = await prisma.blogPost.findMany({
     orderBy: { date: 'desc' },
   })
