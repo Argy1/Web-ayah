@@ -1,26 +1,35 @@
 // src/types/admin.ts
 
-export type ProfileData = {
-  id: number
+export interface ProfileData {
   photo: string
   about: string
-  education: string[]                   // daftar baris teks
-  experience: { title: string; period: string; desc: string }[]
-  skills: string[]                      // daftar kata kunci
-  dob: string | null                    // ISO date string
-  contact: { location: string; phone: string; email: string }
-  social: { linkedin: string; github: string; twitter: string }
-  updatedAt: string                     // ISO date
+  education: string[]
+  experience: {
+    title: string
+    period: string
+    desc: string
+  }[]
+  skills: string[]
+  dob?: Date
+
+  // Contact sekarang mendukung juga social links
+  contact: {
+    location: string
+    phone: string
+    email: string
+    linkedin?: string
+    github?: string
+    twitter?: string
+  }
 }
 
-export type PageContentData = {
+export interface PageContentData {
   page: string
   title: string
   body: string
-  updatedAt: string                     // ISO date
 }
 
-export type JourneyItem = {
+export interface JourneyItem {
   id: number
   order: number
   title: string
@@ -29,36 +38,18 @@ export type JourneyItem = {
   image: string
 }
 
-export type MemoryItem = {
+export interface MemoryItem {
   id: number
   order: number
   label: string
   image: string
 }
 
-// Tipe baru untuk blog post
-export type PostItem = {
-  id: number
-  slug: string
-  title: string
-  excerpt: string
-  content: string
-  image: string
-  date: string                          // ISO date string
-}
-
-export type EditPageProps = {
-  page: 'profile'
-       | 'perjalanan-hidup'
-       | 'galeri-kenangan'
-       | 'blog'
-       | 'pelajaran-hidup'
-       | 'motivasi-inspirasi'
-       | string
-
+// Props yang dikirimkan ke AdminEditClient
+export interface EditPageProps {
+  page: 'profile' | 'perjalanan-hidup' | 'galeri-kenangan' | 'blog' | 'motivasi-inspirasi' | 'pelajaran-hidup'
   initialProfile?: ProfileData
-  initialContent?: PageContentData
-  initialJourney?: JourneyItem[]
-  initialMemory?: MemoryItem[]
-  initialPosts?: PostItem[]             // jika Anda passing daftar post
+  initialContent: PageContentData
+  initialJourney: JourneyItem[]
+  initialMemory: MemoryItem[]
 }
