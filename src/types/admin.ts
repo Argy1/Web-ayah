@@ -45,6 +45,7 @@ export interface MemoryItem {
   description: string
   isFavorite: boolean
   image: string
+  description: string
 }
 
 export interface PostItem {
