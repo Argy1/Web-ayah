@@ -14,6 +14,7 @@ import {
   EditPageProps,
 } from '../types/admin'
 import {
+  PlusCircle,
   UserCircle2,
   Calendar as CalendarIcon,
   MapPin,
