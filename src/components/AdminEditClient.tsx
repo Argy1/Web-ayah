@@ -14,6 +14,7 @@ import {
   EditPageProps,
 } from '../types/admin'
 import {
+  CheckCircle,
   ImageIcon,
   Trash2,
   PlusCircle,
