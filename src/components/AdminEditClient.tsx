@@ -14,6 +14,7 @@ import {
   PostItem,
   EditPageProps,
 } from '../types/admin'
+import { UserCircle2 } from 'lucide-react'
 
 export default function AdminEditClient({
   page,
