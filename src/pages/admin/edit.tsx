@@ -1,8 +1,8 @@
 // src/pages/admin/edit.tsx
-import { GetServerSideProps, GetServerSidePropsContext } from 'next'
-import dynamic from 'next/dynamic'
+import { GetServerSideProps } from 'next'
 import { getServerSession } from 'next-auth/next'
-import { authOptions } from '../api/auth/[...nextauth]'
+import { authOptions } from './auth/[...nextauth]'
+import AdminEditClient from '../../components/AdminEditClient'
 import { prisma } from '../../lib/prisma'
 import {
   ProfileData,
@@ -13,89 +13,133 @@ import {
   EditPageProps,
 } from '../../types/admin'
 
-const AdminEditClient = dynamic(() => import('../../components/AdminEditClient'), {
-  ssr: false,
-})
-
 export const getServerSideProps: GetServerSideProps<EditPageProps> = async (
-  ctx: GetServerSidePropsContext
+  ctx
 ) => {
-  // 1) cek session + role
+  // 1) Cek session + role
   const session = await getServerSession(ctx.req, ctx.res, authOptions)
   if (!session || (session.user as any).role !== 'admin') {
+    return { redirect: { destination: '/login', permanent: false } }
+  }
+
+  // 2) Ambil profil
+  const rawProfile = await prisma.profile.findFirst()
+  if (!rawProfile) {
+    // Kalau belum ada profil, kirim default kosong
     return {
-      redirect: { destination: '/login', permanent: false },
+      props: {
+        page: 'profile',
+        initialProfile: {
+          id: 0,
+          photo: '',
+          about: '',
+          education: [],
+          experience: [],
+          skills: [],
+          contact: {
+            location: '',
+            phone: '',
+            email: '',
+            linkedin: '',
+            github: '',
+            twitter: '',
+          },
+        },
+        initialContent: { page: 'profile', title: '', body: '' },
+        initialJourney: [],
+        initialMemory: [],
+        posts: [],
+      },
     }
   }
 
-  // 2) ambil profile (asumsikan hanya 1 row)
-  const rawProfile = await prisma.profile.findFirst()
+  // 3) Parse contact JSON
+  const contactRaw = (rawProfile.contact as Record<string, string>) || {}
   const initialProfile: ProfileData = {
-    id: rawProfile!.id,
-    photo: rawProfile!.photo,
-    about: rawProfile!.about,
-    education: (rawProfile!.education as string[]) ?? [],
-    experience: (rawProfile!.experience as { title: string; period: string; desc: string }[]) ?? [],
-    skills: (rawProfile!.skills as string[]) ?? [],
+    id: rawProfile.id,
+    photo: rawProfile.photo,
+    about: rawProfile.about,
+    education: Array.isArray(rawProfile.education)
+      ? rawProfile.education
+      : [],
+    experience: Array.isArray(rawProfile.experience)
+      ? rawProfile.experience
+      : [],
+    skills: Array.isArray(rawProfile.skills) ? rawProfile.skills : [],
     contact: {
-      location: rawProfile!.contact.location,
-      phone: rawProfile!.contact.phone,
-      email: rawProfile!.contact.email,
-      linkedin: rawProfile!.contact.linkedin,
-      github: rawProfile!.contact.github,
-      twitter: rawProfile!.contact.twitter,
+      location: contactRaw.location ?? '',
+      phone: contactRaw.phone ?? '',
+      email: contactRaw.email ?? '',
+      linkedin: contactRaw.linkedin ?? '',
+      github: contactRaw.github ?? '',
+      twitter: contactRaw.twitter ?? '',
     },
   }
 
-  // 3) tentukan page dari query ?page=...
-  const pageParam = Array.isArray(ctx.query.page) ? ctx.query.page[0] : ctx.query.page
-  const page = (pageParam as EditPageProps['page']) || 'profile'
-
-  // 4) ambil page content
+  // 4) Ambil page content
   const rawContent = await prisma.pageContent.findUnique({
-    where: { page },
+    where: { page: 'profile' },
   })
   const initialContent: PageContentData = {
-    page: rawContent!.page,
-    title: rawContent!.title,
-    body: rawContent!.body,
+    page: rawContent?.page ?? 'profile',
+    title: rawContent?.title ?? '',
+    body: rawContent?.body ?? '',
   }
 
-  // 5) ambil journey & memory
-  const initialJourney: JourneyItem[] = await prisma.journeyItem.findMany({
+  // 5) Ambil perjalanan hidup
+  const journeyRaw = await prisma.journeyItem.findMany({
     orderBy: { order: 'asc' },
   })
-  const initialMemory: MemoryItem[] = await prisma.memoryItem.findMany({
-    orderBy: { order: 'asc' },
-  })
+  const initialJourney: JourneyItem[] = journeyRaw.map((it) => ({
+    id: it.id,
+    order: it.order,
+    title: it.title,
+    period: it.period,
+    description: it.description,
+    image: it.image,
+  }))
 
-  // 6) untuk blog: ambil posts
-  let posts: PostItem[] = []
-  if (page === 'blog') {
-    const dbPosts = await prisma.post.findMany({ orderBy: { date: 'desc' } })
-    posts = dbPosts.map((p) => ({
-      id: p.id,
-      slug: p.slug,
-      date: p.date.toISOString().slice(0, 10),
-      title: p.title,
-      excerpt: p.excerpt,
-      content: p.content,
-      image: p.image,
-    }))
-  }
+  // 6) Ambil galeri kenangan
+  const memoryRaw = await prisma.memoryItem.findMany({
+    orderBy: { order: 'asc' },
+  })
+  const initialMemory: MemoryItem[] = memoryRaw.map((it) => ({
+    id: it.id,
+    order: it.order,
+    label: it.label,
+    date: it.date.toISOString(),
+    location: it.location,
+    description: it.description,
+    isFavorite: it.isFavorite,
+    image: it.image,
+  }))
+
+  // 7) Ambil blog posts
+  const postsRaw = await prisma.blogPost.findMany({
+    orderBy: { date: 'desc' },
+  })
+  const posts: PostItem[] = postsRaw.map((p) => ({
+    id: p.id,
+    slug: p.slug,
+    title: p.title,
+    date: p.date.toISOString(),
+    excerpt: p.excerpt,
+    content: p.content,
+    image: p.image,
+  }))
 
   return {
     props: {
-      page,
+      page: 'profile',
       initialProfile,
       initialContent,
       initialJourney,
       initialMemory,
-      posts, // optional, hanya terisi saat page==='blog'
+      posts,
     },
   }
 }
 
-export default function EditPage(props: EditPageProps) {
+export default function EditAdminPage(props: EditPageProps) {
   return <AdminEditClient {...props} />
 }
