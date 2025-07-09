@@ -42,6 +42,7 @@ export default function AdminEditClient({
     linkedin: '',
     github: '',
     twitter: '',
+     ...(initialProfile?.contact ?? {}),
   }
 
   // ─── PROFILE state ───────────────────────────────────────────────────────
