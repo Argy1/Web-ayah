@@ -1,0 +1,42 @@
+@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap");
+@import "tailwindcss";
+
+/* @tailwind base;
+@tailwind components; */
+@tailwind utilities;
+
+@theme {
+    --font-sans: "Poppins", sans-serif;
+    --aspect-cinema: 21/9;
+}
+
+.mask-radial-gradient {
+    -webkit-mask-image: radial-gradient(100% 100% at 100% 0,#fff,#0000);
+    mask-image: radial-gradient(100% 100% at 100% 0,#fff,#0000);
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body, button, a, input, textarea {
+  cursor: none;
+}
+
+.cursor-default {
+  width: 50px;
+  height: 50px;
+  border: 2px solid rgb(0, 0, 0);
+  border-radius: 9999px;
+  transition: background 0.2s, transform 0.2s;
+}
+
+.cursor-hover {
+  width: 60px;
+  height: 60px;
+  background: black;
+  opacity: 0.8;
+  border: 2px solid white;
+  border-radius: 9999px;
+  transition: background 0.2s, transform 0.2s;
+}

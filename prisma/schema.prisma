@@ -1,0 +1,66 @@
+// prisma/schema.prisma
+generator client {
+  provider = "prisma-client-js"
+}
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id       Int     @id @default(autoincrement())
+  name     String?
+  email    String  @unique
+  password String
+  role     String
+}
+
+model PageContent {
+  id        Int      @id @default(autoincrement())
+  page      String   @unique
+  title     String
+  body      String
+  updatedAt DateTime @updatedAt
+}
+
+/// Tambahan model Profile:
+model Profile {
+  id         Int    @id @default(autoincrement())
+  photo      String
+  about      String
+  education  Json
+  experience Json
+  skills     Json
+  contact    Json
+  updatedAt  DateTime @updatedAt
+}
+
+model JourneyItem {
+  id          Int      @id @default(autoincrement())
+  order       Int      @unique                // urutan tampil
+  title       String
+  period      String
+  description String
+  image       String   // URL gambar
+}
+
+model MemoryItem {
+  id          Int      @id @default(autoincrement())
+  order       Int
+  label       String
+  date        DateTime
+  location    String
+  isFavorite  Boolean  @default(false)
+  description String
+  image       String
+}
+
+model BlogPost {
+  id        Int      @id @default(autoincrement())
+  slug      String   @unique
+  title     String
+  date      DateTime
+  excerpt   String
+  content   String  
+  image     String
+}
