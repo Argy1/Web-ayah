@@ -42,13 +42,13 @@ export default function AdminEditClient({
 
   // ─── Default wrappers for possibly-missing fields ────────────────────────
   const contactData: ProfileData['contact'] = {
-  location,
-  phone,
-  email,
-  linkedin,
-  github,
-  twitter,
-}
+  location = '',
+  phone = '',
+  email = '',
+  linkedin = '',
+  github = '',
+  twitter = '',
+} = initialProfile?.contact ?? {}
   // ─── PROFILE state ───────────────────────────────────────────────────────
   const [photoFile, setPhotoFile] = useState<File | null>(null)
   const [photoPreview, setPhotoPreview] = useState<string>(
