@@ -14,7 +14,7 @@ import {
   EditPageProps,
 } from '../types/admin'
 import {
-  BlogIcon,
+  BookOpen as BlogIcon,
   Star,
   CameraIcon,
   CheckCircle,
