@@ -41,7 +41,7 @@ export default function AdminEditClient({
   const router = useRouter()
 
   // ─── Default wrappers for possibly-missing fields ────────────────────────
-  const contactData: ProfileData['contact'] = {
+const {
   location = '',
   phone = '',
   email = '',
@@ -49,6 +49,16 @@ export default function AdminEditClient({
   github = '',
   twitter = '',
 } = initialProfile?.contact ?? {}
+
+// Sekarang contactData punya semua field sekali saja
+const contactData: ProfileData['contact'] = {
+  location,
+  phone,
+  email,
+  linkedin,
+  github,
+  twitter,
+}
   // ─── PROFILE state ───────────────────────────────────────────────────────
   const [photoFile, setPhotoFile] = useState<File | null>(null)
   const [photoPreview, setPhotoPreview] = useState<string>(
