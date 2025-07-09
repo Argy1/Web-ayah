@@ -300,54 +300,56 @@ const saveMemoryItem = async (item: MemoryItem, idx: number) => {
     }
   }
   // ─── BLOG state & handlers ────────────────────────────────────────────────
-  const [posts, setPosts] = useState<PostItem[]>(initialContent.posts || [])
+  const [posts, setPosts] = useState<PostItem[]>(initialPosts)
   const [postFiles, setPostFiles] = useState<(File | null)[]>(
-    initialContent.posts.map(() => null)
+    initialPosts.map(() => null)
   )
   const [postPreviews, setPostPreviews] = useState<string[]>(
-    initialContent.posts.map((p) => p.image)
+    initialPosts.map((p) => p.image)
   )
 
   const addPost = () => {
     setPosts([
       ...posts,
-      { id: 0, date: '', title: '', excerpt: '', content: '', image: '' },
+      {
+        id: 0,
+        slug: '',
+        title: '',
+        date: new Date().toISOString(),
+        excerpt: '',
+        content: '',
+        image: '',
+      },
     ])
     setPostFiles([...postFiles, null])
     setPostPreviews([...postPreviews, ''])
   }
 
-  const updatePost = (
-    idx: number,
-    field: keyof PostItem,
-    value: any
-  ) => {
+  const updatePost = (idx: number, field: keyof PostItem, value: any) => {
     const arr = [...posts]
     // @ts-ignore
     arr[idx][field] = value
     setPosts(arr)
   }
 
-  const onPostFileChange = (
-    idx: number,
-    e: React.ChangeEvent<HTMLInputElement>
-  ) => {
+  const onPostFileChange = (idx: number, e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0] ?? null
-    const newFiles = [...postFiles]
-    newFiles[idx] = f
-    setPostFiles(newFiles)
+    const files = [...postFiles]
+    files[idx] = f
+    setPostFiles(files)
     if (f) {
-      const newPreviews = [...postPreviews]
-      newPreviews[idx] = URL.createObjectURL(f)
-      setPostPreviews(newPreviews)
+      const prev = [...postPreviews]
+      prev[idx] = URL.createObjectURL(f)
+      setPostPreviews(prev)
     }
   }
 
   const savePost = async (post: PostItem, idx: number) => {
     const form = new FormData()
     form.append('id', post.id.toString())
-    form.append('date', post.date)
+    form.append('slug', post.slug)
     form.append('title', post.title)
+    form.append('date', post.date)
     form.append('excerpt', post.excerpt)
     form.append('content', post.content)
     if (postFiles[idx]) form.append('imageFile', postFiles[idx]!)
@@ -362,15 +364,11 @@ const saveMemoryItem = async (item: MemoryItem, idx: number) => {
 
   const deletePost = async (id: number) => {
     if (!confirm('Hapus post ini?')) return
-    try {
-      await axios.delete(`/api/blog?id=${id}`)
-      alert('Post dihapus!')
-      router.reload()
-    } catch {
-      alert('Gagal menghapus post.')
-    }
+    await axios.delete(`/api/blog?id=${id}`)
+    alert('Post dihapus!')
+    router.reload()
   }
-
+  
   // ─── Render by page ───────────────────────────────────────────────────────
   if (page === 'profile') {
     return (
@@ -804,125 +802,125 @@ const saveMemoryItem = async (item: MemoryItem, idx: number) => {
   }
 
   if (page === 'blog') {
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="p-8 bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-200 rounded-lg shadow-lg max-w-5xl mx-auto space-y-8"
-    >
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-extrabold flex items-center">
-          <BlogIcon className="mr-2 text-blue-600" /> Edit Blog
-        </h1>
-        <motion.button
-          onClick={addPost}
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          className="inline-flex items-center px-4 py-2 bg-blue-500 text-white rounded-lg shadow hover:bg-blue-600"
-        >
-          <PlusCircle className="mr-2" /> Tambah Post
-        </motion.button>
-      </div>
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="p-8 bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-200 rounded-lg shadow-lg max-w-5xl mx-auto space-y-8"
+      >
+        <div className="flex items-center justify-between">
+          <h1 className="text-3xl font-extrabold flex items-center">
+            <BlogIcon className="mr-2 text-blue-600" /> Edit Blog
+          </h1>
+          <motion.button
+            onClick={addPost}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            className="inline-flex items-center px-4 py-2 bg-blue-500 text-white rounded-lg shadow hover:bg-blue-600"
+          >
+            <PlusCircle className="mr-2" /> Tambah Post
+          </motion.button>
+        </div>
 
-      {posts.map((post, idx) => (
-        <motion.div
-          key={idx}
-          initial={{ x: -20, opacity: 0 }}
-          animate={{ x: 0, opacity: 1 }}
-          transition={{ delay: idx * 0.1 }}
-          className="border-b pb-6 mb-6 space-y-4"
-        >
-          {/* Tanggal */}
-          <div className="flex items-center space-x-4">
-            <label className="w-20">📅 Tanggal</label>
-            <input
-              type="date"
-              value={post.date.slice(0, 10)}
-              onChange={e => updatePost(idx, 'date', e.target.value)}
-              className="p-2 border rounded flex-1"
-            />
-          </div>
-
-          {/* Judul */}
-          <div className="flex items-center space-x-4">
-            <label className="w-20">📝 Judul</label>
-            <input
-              type="text"
-              value={post.title}
-              onChange={e => updatePost(idx, 'title', e.target.value)}
-              placeholder="Judul post"
-              className="p-2 border rounded flex-1"
-            />
-          </div>
-
-          {/* Excerpt */}
-          <div className="flex items-start space-x-4">
-            <label className="w-20 pt-2">✂️ Ringkasan</label>
-            <textarea
-              rows={2}
-              value={post.excerpt}
-              onChange={e => updatePost(idx, 'excerpt', e.target.value)}
-              placeholder="Excerpt (ringkasan)"
-              className="w-full p-2 border rounded"
-            />
-          </div>
-
-          {/* Konten */}
-          <div className="flex items-start space-x-4">
-            <label className="w-20 pt-2">📖 Konten</label>
-            <textarea
-              rows={4}
-              value={post.content}
-              onChange={e => updatePost(idx, 'content', e.target.value)}
-              placeholder="Tuliskan konten lengkap di sini"
-              className="w-full p-2 border rounded font-mono"
-            />
-          </div>
-
-          {/* Gambar */}
-          <div className="flex items-center space-x-4">
-            <label className="w-20">🖼️ Gambar</label>
-            <input
-              type="file"
-              accept="image/*"
-              onChange={e => onPostFileChange(idx, e)}
-              className="flex-1"
-            />
-            {postPreviews[idx] && (
-              <img
-                src={postPreviews[idx]}
-                alt="Preview"
-                className="w-24 h-16 object-cover rounded"
+        {posts.map((post, idx) => (
+          <motion.div
+            key={idx}
+            initial={{ x: -20, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            transition={{ delay: idx * 0.1 }}
+            className="border-b pb-6 mb-6 space-y-4"
+          >
+            {/* Tanggal */}
+            <div className="flex items-center space-x-4">
+              <label className="w-20">📅 Tanggal</label>
+              <input
+                type="date"
+                value={post.date.slice(0, 10)}
+                onChange={e => updatePost(idx, 'date', e.target.value)}
+                className="p-2 border rounded flex-1"
               />
-            )}
-          </div>
+            </div>
 
-          {/* Tombol Simpan + Hapus */}
-          <div className="flex items-center space-x-2">
-            <motion.button
-              onClick={() => savePost(post, idx)}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 flex items-center"
-            >
-              <CheckCircle className="mr-2" /> Simpan
-            </motion.button>
-            {post.id !== 0 && (
+            {/* Judul */}
+            <div className="flex items-center space-x-4">
+              <label className="w-20">📝 Judul</label>
+              <input
+                type="text"
+                value={post.title}
+                onChange={e => updatePost(idx, 'title', e.target.value)}
+                placeholder="Judul post"
+                className="p-2 border rounded flex-1"
+              />
+            </div>
+
+            {/* Excerpt */}
+            <div className="flex items-start space-x-4">
+              <label className="w-20 pt-2">✂️ Ringkasan</label>
+              <textarea
+                rows={2}
+                value={post.excerpt}
+                onChange={e => updatePost(idx, 'excerpt', e.target.value)}
+                placeholder="Excerpt (ringkasan)"
+                className="w-full p-2 border rounded"
+              />
+            </div>
+
+            {/* Konten */}
+            <div className="flex items-start space-x-4">
+              <label className="w-20 pt-2">📖 Konten</label>
+              <textarea
+                rows={4}
+                value={post.content}
+                onChange={e => updatePost(idx, 'content', e.target.value)}
+                placeholder="Tuliskan konten lengkap di sini"
+                className="w-full p-2 border rounded font-mono"
+              />
+            </div>
+
+            {/* Gambar */}
+            <div className="flex items-center space-x-4">
+              <label className="w-20">🖼️ Gambar</label>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={e => onPostFileChange(idx, e)}
+                className="flex-1"
+              />
+              {postPreviews[idx] && (
+                <img
+                  src={postPreviews[idx]}
+                  alt="Preview"
+                  className="w-24 h-16 object-cover rounded"
+                />
+              )}
+            </div>
+
+            {/* Tombol Simpan + Hapus */}
+            <div className="flex items-center space-x-2">
               <motion.button
-                onClick={() => deletePost(post.id)}
+                onClick={() => savePost(post, idx)}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 flex items-center"
+                className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 flex items-center"
               >
-                <Trash2 className="mr-2" /> Hapus
+                <CheckCircle className="mr-2" /> Simpan
               </motion.button>
-            )}
-          </div>
-        </motion.div>
-      ))}
-    </motion.div>
-  )
-}
+              {post.id !== 0 && (
+                <motion.button
+                  onClick={() => deletePost(post.id)}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 flex items-center"
+                >
+                  <Trash2 className="mr-2" /> Hapus
+                </motion.button>
+              )}
+            </div>
+          </motion.div>
+        ))}
+      </motion.div>
+    )
+  }
 
   // Default fallback
   return null
