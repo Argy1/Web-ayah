@@ -234,7 +234,7 @@ export default function AdminEditClient({
         image: '',
         date: '',      
         location: '',  
-        isFavorite: '',
+        isFavorite: false,
       },
     ])
     setMemoryFiles([...memoryFiles, null])
