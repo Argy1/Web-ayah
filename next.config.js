@@ -1,21 +1,18 @@
-import type { NextConfig } from "next"
+// next.config.js
+/** @type {import('next').NextConfig} */
+const nextConfig = {
+  reactStrictMode: true,
+  swcMinify: true,
 
-const nextConfig: NextConfig = {
-  // Agar build tetap lanjut meski ada error ESLint
+  // biarkan build jalan walau ada error ESLint
   eslint: {
     ignoreDuringBuilds: true,
   },
 
-  // Opsi Next.js umum
-  reactStrictMode: true,
-  swcMinify: true,
-
-  // Jika menggunakan App Router
+  // kalau pakai App Router, biarkan ini
   experimental: {
     appDir: true,
   },
-
-  // Tambahkan setting lain yang diperlukan...
 }
 
-export default nextConfig
+module.exports = nextConfig
