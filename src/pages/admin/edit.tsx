@@ -1,99 +1,94 @@
 // src/pages/admin/edit.tsx
 import { GetServerSideProps } from 'next'
+import dynamic from 'next/dynamic'
 import { getServerSession } from 'next-auth/next'
-import { authOptions } from '../api/auth/[...nextauth]'
+import { authOptions } from './api/auth/[...nextauth]'
 import { prisma } from '../../lib/prisma'
-import AdminEditClient from '../../components/AdminEditClient'
 import {
   ProfileData,
   PageContentData,
   JourneyItem,
   MemoryItem,
-  BlogPost,
+  PostItem,           // <-- Ganti BlogPost ke PostItem
   EditPageProps,
 } from '../../types/admin'
 
-export default function AdminEditPage(props: EditPageProps) {
-  return <AdminEditClient {...props} />
-}
+// Lazy-load client component karena kita pakai banyak 'useState' & 'framer-motion'
+const AdminEditClient = dynamic(
+  () => import('../../components/AdminEditClient'),
+  { ssr: false }
+)
 
 export const getServerSideProps: GetServerSideProps<EditPageProps> = async (ctx) => {
-  // 1) Protect route
+  // Cek session + role
   const session = await getServerSession(ctx.req, ctx.res, authOptions)
   if (!session || (session.user as any).role !== 'admin') {
-    return { redirect: { destination: '/login', permanent: false } }
+    return {
+      redirect: { destination: '/login', permanent: false }
+    }
   }
 
-  // 2) Determine page to edit
-  const page = (ctx.query.page as string) || 'profile'
+  // Ambil data profile
+  const profile = await prisma.profile.findFirst()
 
-  // 3) Fetch the single Profile row
-  const prof = await prisma.profile.findFirst()
+  // Tentukan page dari query ?page=profile|perjalanan-hidup|galeri-kenangan|blog
+  const page = Array.isArray(ctx.query.page)
+    ? ctx.query.page[0]
+    : ctx.query.page || 'profile'
 
-  // Normalize to strings before splitting
-  const eduRaw = prof?.education ?? ''
-  const expRaw = prof?.experience ?? ''
-  const skillsRaw = prof?.skills ?? ''
+  // Ambil konten statis
+  const pageContent = await prisma.pageContent.findUnique({
+    where: { page }
+  })
 
-  const initialProfile: ProfileData = {
-    photo: prof?.photo ?? '',
-    about: prof?.about ?? '',
-    education:
-      typeof eduRaw === 'string'
-        ? eduRaw.split('\n').filter(Boolean)
-        : [],
-    experience:
-      typeof expRaw === 'string'
-        ? expRaw
-            .split('\n')
-            .filter(Boolean)
-            .map((line) => {
-              const [title, period, desc] = line.split('|')
-              return { title: title || '', period: period || '', desc: desc || '' }
-            })
-        : [],
-    skills:
-      typeof skillsRaw === 'string'
-        ? skillsRaw.split(',').map((s) => s.trim()).filter(Boolean)
-        : [],
-    contact:
-      typeof prof?.contact === 'string'
-        ? JSON.parse(prof.contact)
-        : {},
+  // Ambil journey & memory
+  const journeyItems = await prisma.journeyItem.findMany({
+    orderBy: { order: 'asc' }
+  })
+  const memoryItems = await prisma.memoryItem.findMany({
+    orderBy: { order: 'asc' }
+  })
+
+  // Hanya untuk page==='blog', ambil semua post
+  let posts: PostItem[] = []
+  if (page === 'blog') {
+    const dbPosts = await prisma.post.findMany({
+      orderBy: { date: 'desc' }
+    })
+    posts = dbPosts.map(p => ({
+      id: p.id,
+      date: p.date.toISOString().slice(0, 10),
+      title: p.title,
+      excerpt: p.excerpt,
+      content: p.content,
+      image: p.image
+    }))
   }
 
-  // 4) Fetch generic page content
-  const pc = await prisma.pageContent.findUnique({ where: { page } })
-  const initialContent: PageContentData = {
-    page,
-    title: pc?.title ?? '',
-    body: pc?.body ?? '',
-  }
-
-  // 5) Journey items
-  const initialJourney: JourneyItem[] = await prisma.journeyItem.findMany({
-    orderBy: { order: 'asc' },
-  })
-
-  // 6) Memory items
-  const initialMemory: MemoryItem[] = await prisma.memoryItem.findMany({
-    orderBy: { order: 'asc' },
-  })
-
-  // 7) Blog posts
-  const initialBlog: BlogPost[] = await prisma.blogPost.findMany({
-    orderBy: { date: 'desc' },
-  })
-
-  // 8) Serialize & return
   return {
     props: {
-      page,
-      initialProfile: JSON.parse(JSON.stringify(initialProfile)),
-      initialContent: JSON.parse(JSON.stringify(initialContent)),
-      initialJourney: JSON.parse(JSON.stringify(initialJourney)),
-      initialMemory: JSON.parse(JSON.stringify(initialMemory)),
-      initialBlog: JSON.parse(JSON.stringify(initialBlog)),
-    },
+      page: page as EditPageProps['page'],
+      initialProfile: {
+        id: profile.id,
+        photo: profile.photo,
+        about: profile.about,
+        education: profile.education,
+        experience: profile.experience,
+        skills: profile.skills,
+        contact: profile.contact
+      },
+      initialContent: {
+        page: pageContent.page,
+        title: pageContent.title,
+        body: pageContent.body,
+        posts        // <-- sertakan daftar posts di initialContent
+      },
+      initialJourney: journeyItems,
+      initialMemory: memoryItems
+    }
   }
+}
+
+export default function EditPage(props: EditPageProps) {
+  return <AdminEditClient {...props} />
 }
