@@ -11,6 +11,7 @@ import {
   PageContentData,
   JourneyItem,
   MemoryItem,
+  PostItem,
   EditPageProps,
 } from '../types/admin'
 import {
@@ -296,6 +297,77 @@ const saveMemoryItem = async (item: MemoryItem, idx: number) => {
       router.reload()
     } catch {
       alert('Gagal menghapus foto.')
+    }
+  }
+  // ─── BLOG state & handlers ────────────────────────────────────────────────
+  const [posts, setPosts] = useState<PostItem[]>(initialContent.posts || [])
+  const [postFiles, setPostFiles] = useState<(File | null)[]>(
+    initialContent.posts.map(() => null)
+  )
+  const [postPreviews, setPostPreviews] = useState<string[]>(
+    initialContent.posts.map((p) => p.image)
+  )
+
+  const addPost = () => {
+    setPosts([
+      ...posts,
+      { id: 0, date: '', title: '', excerpt: '', content: '', image: '' },
+    ])
+    setPostFiles([...postFiles, null])
+    setPostPreviews([...postPreviews, ''])
+  }
+
+  const updatePost = (
+    idx: number,
+    field: keyof PostItem,
+    value: any
+  ) => {
+    const arr = [...posts]
+    // @ts-ignore
+    arr[idx][field] = value
+    setPosts(arr)
+  }
+
+  const onPostFileChange = (
+    idx: number,
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const f = e.target.files?.[0] ?? null
+    const newFiles = [...postFiles]
+    newFiles[idx] = f
+    setPostFiles(newFiles)
+    if (f) {
+      const newPreviews = [...postPreviews]
+      newPreviews[idx] = URL.createObjectURL(f)
+      setPostPreviews(newPreviews)
+    }
+  }
+
+  const savePost = async (post: PostItem, idx: number) => {
+    const form = new FormData()
+    form.append('id', post.id.toString())
+    form.append('date', post.date)
+    form.append('title', post.title)
+    form.append('excerpt', post.excerpt)
+    form.append('content', post.content)
+    if (postFiles[idx]) form.append('imageFile', postFiles[idx]!)
+    else form.append('oldImage', postPreviews[idx])
+
+    await axios.post('/api/blog', form, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    })
+    alert('Post berhasil disimpan!')
+    router.reload()
+  }
+
+  const deletePost = async (id: number) => {
+    if (!confirm('Hapus post ini?')) return
+    try {
+      await axios.delete(`/api/blog?id=${id}`)
+      alert('Post dihapus!')
+      router.reload()
+    } catch {
+      alert('Gagal menghapus post.')
     }
   }
 
