@@ -2,7 +2,7 @@
 
 import { GetServerSideProps } from 'next'
 import { getServerSession } from 'next-auth'
-import { authOptions } from '../api/auth/[...nextauth]'
+import { authOptions } from './api/auth/[...nextauth]'
 import { prisma } from '../../lib/prisma'
 import {
   ProfileData,
