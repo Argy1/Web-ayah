@@ -1,4 +1,5 @@
 // src/pages/profile.tsx
+
 import { GetServerSideProps } from 'next'
 import Image from 'next/image'
 import { prisma } from '../lib/prisma'
@@ -94,7 +95,7 @@ export default function Profile({
         <p>{skills.join(', ')}</p>
       </section>
 
-      {/* Kontak */}
+      {/* Kontak & Sosial Media */}
       <section>
         <h2 className="text-xl font-semibold mb-2">Kontak & Sosial Media</h2>
         <ul className="space-y-2">
@@ -135,16 +136,30 @@ export default function Profile({
   )
 }
 
-export const getServerSideProps: GetServerSideProps<ProfileProps> = async (
-  ctx
-) => {
-  // Ambil data profil dari database
+export const getServerSideProps: GetServerSideProps<ProfileProps> = async () => {
   const data = await prisma.profile.findFirst()
   if (!data) {
     return { notFound: true }
   }
 
-  // Contact mencakup lokasi/phone/email + sosial media di dalamnya
+  // Parse education dan skills jadi string[]
+  const education: string[] = Array.isArray(data.education)
+    ? data.education.filter((e): e is string => typeof e === 'string')
+    : []
+
+  const skills: string[] = Array.isArray(data.skills)
+    ? data.skills.filter((s): s is string => typeof s === 'string')
+    : []
+
+  // Parse pengalaman jadi array objek dengan field string
+  const rawExp = Array.isArray(data.experience) ? data.experience : []
+  const experience = rawExp.map(item => ({
+    title: typeof (item as any).title === 'string' ? (item as any).title : '',
+    period: typeof (item as any).period === 'string' ? (item as any).period : '',
+    desc: typeof (item as any).desc === 'string' ? (item as any).desc : '',
+  }))
+
+  // Split contact vs social media
   const contact = {
     location: data.contact.location ?? '',
     phone: data.contact.phone ?? '',
@@ -156,14 +171,9 @@ export const getServerSideProps: GetServerSideProps<ProfileProps> = async (
     twitter: data.contact.twitter ?? '',
   }
 
-  // Serialisasi tanggal
+  // Serialisasi Date ke ISO
   const dob = data.dob ? data.dob.toISOString() : null
   const updatedAt = data.updatedAt.toISOString()
-
-  // Pastikan field JSON ter-parse sebagai array
-  const education = Array.isArray(data.education) ? data.education : []
-  const experience = Array.isArray(data.experience) ? data.experience : []
-  const skills = Array.isArray(data.skills) ? data.skills : []
 
   return {
     props: {
