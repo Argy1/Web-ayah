@@ -1,7 +1,7 @@
 // src/pages/admin/edit.tsx
 import { GetServerSideProps } from 'next'
 import { getServerSession } from 'next-auth'
-import { authOptions } from '../api/auth/[...nextauth]'
+import { authOptions } from './auth/[...nextauth]'
 import { prisma } from '../../lib/prisma'
 import AdminEditClient from '../../components/AdminEditClient'
 import {
@@ -16,36 +16,56 @@ import {
 export const getServerSideProps: GetServerSideProps<EditPageProps> = async (ctx) => {
   const session = await getServerSession(ctx.req, ctx.res, authOptions)
   if (!session || (session.user as any).role !== 'admin') {
-    return { redirect: { destination: '/login', permanent: false } }
+    return {
+      redirect: { destination: '/login', permanent: false }
+    }
   }
 
-  // ambil data
-  const rawProfile = await prisma.profile.findUnique({ where: { id: 1 } })
-  const rawContent = await prisma.pageContent.findUnique({ where: { page: 'blog' } })
+  // ambil data profil, konten halaman, perjalanan, memori, dan post blog
+  const rawProfile = await prisma.profile.findFirst()
+  const rawContent = await prisma.pageContent.findUnique({
+    where: { page: 'blog' },
+  })
   const rawJourney = await prisma.journeyItem.findMany({ orderBy: { order: 'asc' } })
   const rawMemory = await prisma.memoryItem.findMany({ orderBy: { order: 'asc' } })
-  const rawPosts   = await prisma.postItem.findMany({ orderBy: { date: 'desc' } })
+  const rawPosts = await prisma.blogPost.findMany({ orderBy: { date: 'desc' } })
 
-  // serialize & fallback
-  const initialProfile: ProfileData = {
+  // serialisasi dan pastikan tipe sesuai
+  const profile: ProfileData = {
     id: rawProfile!.id,
     photo: rawProfile!.photo,
     about: rawProfile!.about,
-    education: rawProfile!.education ?? [],
-    experience: rawProfile!.experience ?? [],
-    skills: rawProfile!.skills ?? [],
-    contact: rawProfile!.contact ?? { location: '', phone: '', email: '' },
-    dob: rawProfile!.dob ? rawProfile!.dob.toISOString() : undefined,
+    education: Array.isArray(rawProfile!.education) ? rawProfile!.education : [],
+    experience: Array.isArray(rawProfile!.experience)
+      ? rawProfile!.experience
+      : [],
+    skills: Array.isArray(rawProfile!.skills) ? rawProfile!.skills : [],
+    contact: {
+      location: rawProfile!.contact.location,
+      phone: rawProfile!.contact.phone,
+      email: rawProfile!.contact.email,
+      linkedin: rawProfile!.contact.linkedin,
+      github: rawProfile!.contact.github,
+      twitter: rawProfile!.contact.twitter,
+    },
   }
-  const initialContent: PageContentData = {
+
+  const content: PageContentData = {
     page: rawContent!.page,
     title: rawContent!.title,
     body: rawContent!.body,
   }
-  const initialJourney: JourneyItem[] = rawJourney.map((j) => ({
-    id: j.id, order: j.order, title: j.title, period: j.period, description: j.description, image: j.image,
+
+  const journey: JourneyItem[] = rawJourney.map((j) => ({
+    id: j.id,
+    order: j.order,
+    title: j.title,
+    period: j.period,
+    description: j.description,
+    image: j.image,
   }))
-  const initialMemory: MemoryItem[] = rawMemory.map((m) => ({
+
+  const memory: MemoryItem[] = rawMemory.map((m) => ({
     id: m.id,
     order: m.order,
     label: m.label,
@@ -55,7 +75,8 @@ export const getServerSideProps: GetServerSideProps<EditPageProps> = async (ctx)
     isFavorite: m.isFavorite,
     image: m.image,
   }))
-  const initialPosts: PostItem[] = rawPosts.map((p) => ({
+
+  const posts: PostItem[] = rawPosts.map((p) => ({
     id: p.id,
     slug: p.slug,
     title: p.title,
@@ -68,15 +89,15 @@ export const getServerSideProps: GetServerSideProps<EditPageProps> = async (ctx)
   return {
     props: {
       page: ctx.query.page as EditPageProps['page'],
-      initialProfile,
-      initialContent,
-      initialJourney,
-      initialMemory,
-      initialPosts,
-    },
+      initialProfile: profile,
+      initialContent: content,
+      initialJourney: journey,
+      initialMemory: memory,
+      initialPosts: posts,            // ⬅️ kirim ke client
+    }
   }
 }
 
-export default function EditPage(props: EditPageProps) {
+export default function Page(props: EditPageProps) {
   return <AdminEditClient {...props} />
 }
