@@ -56,15 +56,7 @@ export default function AdminEditClient({
   if (!session || (session.user as any).role !== 'admin') return null
 
   // ─── PROFILE ────────────────────────────────────────────────────────
-  const contactData = {
-    location: '',
-    phone: '',
-    email: '',
-    linkedin: '',
-    github: '',
-    twitter: '',
-    ...(initialProfile.contact || {}),
-  }
+  const contactData = initialProfile.contact
 
   const [photoFile, setPhotoFile] = useState<File | null>(null)
   const [photoPreview, setPhotoPreview] = useState(initialProfile.photo)
