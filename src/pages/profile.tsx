@@ -142,16 +142,12 @@ export const getServerSideProps: GetServerSideProps<ProfileProps> = async () => 
     return { notFound: true }
   }
 
-  // Parse education dan skills jadi string[]
+  // parsing education
   const education: string[] = Array.isArray(data.education)
     ? data.education.filter((e): e is string => typeof e === 'string')
     : []
 
-  const skills: string[] = Array.isArray(data.skills)
-    ? data.skills.filter((s): s is string => typeof s === 'string')
-    : []
-
-  // Parse pengalaman jadi array objek
+  // parsing experience
   const rawExp = Array.isArray(data.experience) ? data.experience : []
   const experience = rawExp.map(item => ({
     title: typeof (item as any).title === 'string' ? (item as any).title : '',
@@ -159,20 +155,33 @@ export const getServerSideProps: GetServerSideProps<ProfileProps> = async () => 
     desc: typeof (item as any).desc === 'string' ? (item as any).desc : '',
   }))
 
-  // Guard jika contact null
-  const cr = data.contact ?? {}
+  // parsing skills
+  const skills: string[] = Array.isArray(data.skills)
+    ? data.skills.filter((s): s is string => typeof s === 'string')
+    : []
+
+  // guard untuk contact JSON
+  const rawContact = data.contact
+  const contactObj =
+    typeof rawContact === 'object' &&
+    rawContact !== null &&
+    !Array.isArray(rawContact)
+      ? (rawContact as Record<string, unknown>)
+      : {}
+
   const contact = {
-    location: typeof cr.location === 'string' ? cr.location : '',
-    phone: typeof cr.phone === 'string' ? cr.phone : '',
-    email: typeof cr.email === 'string' ? cr.email : '',
+    location: typeof contactObj.location === 'string' ? contactObj.location : '',
+    phone: typeof contactObj.phone === 'string' ? contactObj.phone : '',
+    email: typeof contactObj.email === 'string' ? contactObj.email : '',
   }
   const social = {
-    linkedin: typeof cr.linkedin === 'string' ? cr.linkedin : '',
-    github: typeof cr.github === 'string' ? cr.github : '',
-    twitter: typeof cr.twitter === 'string' ? cr.twitter : '',
+    linkedin:
+      typeof contactObj.linkedin === 'string' ? contactObj.linkedin : '',
+    github: typeof contactObj.github === 'string' ? contactObj.github : '',
+    twitter: typeof contactObj.twitter === 'string' ? contactObj.twitter : '',
   }
 
-  // Serialisasi Date
+  // dob + updatedAt
   const dob = data.dob ? data.dob.toISOString() : null
   const updatedAt = data.updatedAt.toISOString()
 
