@@ -34,12 +34,12 @@ const BlogPage: NextPage<Props> = ({ posts }) => {
 }
 
 export const getStaticProps: GetStaticProps<Props> = async () => {
-  // ambil data dari Prisma
-  const rawPosts = await prisma.post.findMany({
+  // Ganti prisma.post => prisma.blogPost
+  const rawPosts = await prisma.blogPost.findMany({
     orderBy: { date: 'desc' },
   })
 
-  // Serialize Date ke string
+  // Serialize Date ke ISO string
   const posts: PostItem[] = rawPosts.map(p => ({
     id: p.id,
     slug: p.slug,
@@ -52,7 +52,7 @@ export const getStaticProps: GetStaticProps<Props> = async () => {
 
   return {
     props: { posts },
-    revalidate: 60, // ISR: rebuild tiap 60 detik
+    revalidate: 60, // reload data tiap 60 detik
   }
 }
 
