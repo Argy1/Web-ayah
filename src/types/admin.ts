@@ -43,6 +43,7 @@ export interface MemoryItem {
   order: number
   label: string
   image: string
+   date: string
 }
 
 // Props yang dikirimkan ke AdminEditClient
