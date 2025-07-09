@@ -151,7 +151,7 @@ export const getServerSideProps: GetServerSideProps<ProfileProps> = async () => 
     ? data.skills.filter((s): s is string => typeof s === 'string')
     : []
 
-  // Parse pengalaman jadi array objek dengan field string
+  // Parse pengalaman jadi array objek
   const rawExp = Array.isArray(data.experience) ? data.experience : []
   const experience = rawExp.map(item => ({
     title: typeof (item as any).title === 'string' ? (item as any).title : '',
@@ -159,19 +159,20 @@ export const getServerSideProps: GetServerSideProps<ProfileProps> = async () => 
     desc: typeof (item as any).desc === 'string' ? (item as any).desc : '',
   }))
 
-  // Split contact vs social media
+  // Guard jika contact null
+  const cr = data.contact ?? {}
   const contact = {
-    location: data.contact.location ?? '',
-    phone: data.contact.phone ?? '',
-    email: data.contact.email ?? '',
+    location: typeof cr.location === 'string' ? cr.location : '',
+    phone: typeof cr.phone === 'string' ? cr.phone : '',
+    email: typeof cr.email === 'string' ? cr.email : '',
   }
   const social = {
-    linkedin: data.contact.linkedin ?? '',
-    github: data.contact.github ?? '',
-    twitter: data.contact.twitter ?? '',
+    linkedin: typeof cr.linkedin === 'string' ? cr.linkedin : '',
+    github: typeof cr.github === 'string' ? cr.github : '',
+    twitter: typeof cr.twitter === 'string' ? cr.twitter : '',
   }
 
-  // Serialisasi Date ke ISO
+  // Serialisasi Date
   const dob = data.dob ? data.dob.toISOString() : null
   const updatedAt = data.updatedAt.toISOString()
 
