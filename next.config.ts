@@ -1,22 +1,21 @@
-// next.config.ts
 import type { NextConfig } from "next"
 
 const nextConfig: NextConfig = {
-  // agar build tetap lanjut walau ada error lint
+  // Agar build tetap lanjut meski ada error ESLint
   eslint: {
     ignoreDuringBuilds: true,
   },
 
-  // opsi Next.js standar yang mungkin sudah ada
+  // Opsi Next.js umum
   reactStrictMode: true,
   swcMinify: true,
 
-  // kalau kamu memakai App Router (app directory)
+  // Jika menggunakan App Router
   experimental: {
     appDir: true,
   },
 
-  // tambahkan konfigurasi lain yang sudah kamu pakai sebelumnya...
+  // Tambahkan setting lain yang diperlukan...
 }
 
 export default nextConfig
