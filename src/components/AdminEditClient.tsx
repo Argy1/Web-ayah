@@ -259,20 +259,22 @@ export default function AdminEditClient({
       setMemoryPreviews(newPreviews)
     }
   }
-  const saveMemoryItem = async (item: MemoryItem, idx: number) => {
-    const form = new FormData()
-    form.append('id', item.id.toString())
-    form.append('order', item.order.toString())
-    form.append('label', item.label)
-    if (memoryFiles[idx]) form.append('imageFile', memoryFiles[idx]!)
-    else form.append('oldImage', memoryPreviews[idx])
+const saveMemoryItem = async (item: MemoryItem, idx: number) => {
+  const form = new FormData()
+  form.append('id', item.id.toString())
+  form.append('order', item.order.toString())
+  form.append('label', item.label)
+  form.append('date', item.date)
+  form.append('location', item.location)
+  if (memoryFiles[idx]) form.append('imageFile', memoryFiles[idx]!)
+  else form.append('oldImage', memoryPreviews[idx])
 
-    await axios.post('/api/memory', form, {
-      headers: { 'Content-Type': 'multipart/form-data' },
-    })
-    alert('Foto kenangan disimpan!')
-    router.reload()
-  }
+  await axios.post('/api/memory', form, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  })
+  alert('Foto kenangan disimpan!')
+  router.reload()
+}
   const deleteMemoryItem = async (id: number) => {
     if (!confirm('Hapus foto kenangan ini?')) return
     try {
