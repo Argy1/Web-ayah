@@ -1,7 +1,7 @@
 // src/pages/admin/edit.tsx
 import { GetServerSideProps } from 'next'
 import { getServerSession } from 'next-auth/next'
-import { authOptions } from '../auth/[...nextauth]'
+import { authOptions } from '../api/auth/[...nextauth]'
 import AdminEditClient from '../../components/AdminEditClient'
 import { prisma } from '../../lib/prisma'
 import {
