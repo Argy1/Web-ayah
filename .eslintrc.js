@@ -7,13 +7,11 @@ module.exports = {
     project: ["./tsconfig.json"],
   },
   rules: {
-    // matikan semua error @typescript-eslint
+    // non-aktifkan rule yang memblokir build
     "@typescript-eslint/no-explicit-any": "off",
     "@typescript-eslint/no-unused-vars": "off",
     "@typescript-eslint/ban-ts-comment": "off",
     "no-var": "off",
-    // kalau masih ada peringatan lain, bisa ditambahkan di sini:
-    // "some-rule": "off",
   },
   ignorePatterns: [
     ".next/",
