@@ -244,7 +244,7 @@ const contactData: ProfileData['contact'] = {
         date: '',      
         location: '',  
         isFavorite: false,
-        descriptiion: '',
+        description: '',
       },
     ])
     setMemoryFiles([...memoryFiles, null])
