@@ -5,136 +5,135 @@ import React, { useState, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/router'
 import axios from 'axios'
-import { motion } from 'framer-motion'
 import {
-  UserCircle2,
-  Calendar as CalendarIcon,
-  MapPin,
-  Phone,
-  Mail,
-  Linkedin as LinkedinIcon,
-  Github as GithubIcon,
-  Twitter as TwitterIcon,
-  Save,
-  FileText as BlogIcon,
-  Image as ImageIcon,
-  Trash2,
-
-  // ↓ добавить эти импорты:
-  PlusCircle,
-  CheckCircle,
-  Star,
-  Camera as CameraIcon,
-  
-} from 'lucide-react'
-import {
-  EditPageProps,
+  ProfileData,
+  PageContentData,
   JourneyItem,
   MemoryItem,
   PostItem,
+  EditPageProps,
 } from '../types/admin'
 
 export default function AdminEditClient({
   page,
   initialProfile,
+  initialContent,
   initialJourney,
   initialMemory,
   initialPosts,
-  initialContent,
 }: EditPageProps) {
-  // ─── Basic hooks ─────────────────────────────────────────────────────────
   const { data: session, status } = useSession()
   const router = useRouter()
 
-  // ─── Default wrappers for possibly-missing fields ────────────────────────
-  const contactData = initialProfile.contact ?? {
-    location: '',
-    phone: '',
-    email: '',
+  // ─── Safe fallbacks ───────────────────────────────────────────────────────
+  const prof: ProfileData = initialProfile ?? {
+    id: 0,
+    photo: '',
+    about: '',
+    education: [],
+    experience: [],
+    skills: [],
+    dob: null,
+    contact: { location: '', phone: '', email: '' },
+    social: { linkedin: '', github: '', twitter: '' },
+    updatedAt: new Date().toISOString(),
   }
-  const socialData = initialProfile.social ?? {
-    linkedin: '',
-    github: '',
-    twitter: '',
+
+  const content: PageContentData = initialContent ?? {
+    page: page,
+    title: '',
+    body: '',
+    updatedAt: new Date().toISOString(),
   }
 
-  // ─── All useState hooks BEFORE any early return ───────────────────────────
-  // Profile
-  const [photoFile, setPhotoFile]       = useState<File | null>(null)
-  const [photoPreview, setPhotoPreview] = useState(initialProfile.photo)
-  const [about, setAbout]               = useState(initialProfile.about)
-  const [education, setEducation]       = useState(initialProfile.education.join('\n'))
-  const [experience, setExperience]     = useState(
-    initialProfile.experience.map(e => `${e.title}|${e.period}|${e.desc}`).join('\n')
-  )
-  const [skills, setSkills]             = useState(initialProfile.skills.join(','))
-  const [dob, setDob]                   = useState(initialProfile.dob?.slice(0,10) ?? '')
-  const [location, setLocation]         = useState(contactData.location)
-  const [phone, setPhone]               = useState(contactData.phone)
-  const [email, setEmail]               = useState(contactData.email)
-  const [linkedin, setLinkedin]         = useState(socialData.linkedin)
-  const [github, setGithub]             = useState(socialData.github)
-  const [twitter, setTwitter]           = useState(socialData.twitter)
+  const journeyList: JourneyItem[] = initialJourney ?? []
+  const memoryList:  MemoryItem[]  = initialMemory  ?? []
+  const postsList:   PostItem[]    = initialPosts   ?? []
 
-  // Journey
-  const [journeyItems, setJourneyItems]       = useState<JourneyItem[]>(initialJourney)
-  const [journeyFiles, setJourneyFiles]       = useState<(File|null)[]>(initialJourney.map(() => null))
-  const [journeyPreviews, setJourneyPreviews] = useState<string[]>(initialJourney.map(i => i.image))
-
-  // Memory (galeri)
-  const [memoryItems, setMemoryItems]         = useState<MemoryItem[]>(initialMemory)
-  const [memoryFiles, setMemoryFiles]         = useState<(File|null)[]>(initialMemory.map(() => null))
-  const [memoryPreviews, setMemoryPreviews]   = useState<string[]>(initialMemory.map(m => m.image))
-
-  // Blog
-  const [posts, setPosts]                     = useState<PostItem[]>(initialPosts || [])
-  const [postFiles, setPostFiles]             = useState<(File|null)[]>(initialPosts?.map(() => null) || [])
-  const [postPreviews, setPostPreviews]       = useState<string[]>(initialPosts?.map(p => p.image) || [])
-
-  // Generic page content
-  const [contentTitle, setContentTitle]       = useState(initialContent.title)
-  const [contentBody, setContentBody]         = useState(initialContent.body)
-
-  // ─── Auth guard ──────────────────────────────────────────────────────────
+  // ─── Redirect non-admin ─────────────────────────────────────────────────
   useEffect(() => {
-    if (status === 'authenticated' && (session?.user as any)?.role !== 'admin') {
+    if (status === 'authenticated' && (!session || (session.user as any).role !== 'admin')) {
       router.replace('/login')
     }
   }, [status, session, router])
 
-  // ─── Early returns ────────────────────────────────────────────────────────
   if (status === 'loading') return <p>Loading…</p>
   if (!session || (session.user as any).role !== 'admin') return null
 
-  // ─── Handlers ────────────────────────────────────────────────────────────
-  // Profile photo picker
+  // ─── PROFILE Hooks ───────────────────────────────────────────────────────
+  const [photoFile,    setPhotoFile]    = useState<File | null>(null)
+  const [photoPreview, setPhotoPreview] = useState(prof.photo)
+  const [about,        setAbout]        = useState(prof.about)
+  const [education,    setEducation]    = useState(prof.education.join('\n'))
+  const [experience,   setExperience]   = useState(
+    prof.experience.map(e => `${e.title}|${e.period}|${e.desc}`).join('\n')
+  )
+  const [skills,       setSkills]       = useState(prof.skills.join(','))
+  const [contact,      setContact]      = useState(JSON.stringify(prof.contact, null, 2))
+  const [social,       setSocial]       = useState(JSON.stringify(prof.social, null, 2))
+  const [dob,          setDob]          = useState(prof.dob ?? '')
+
+  // ─── PAGE CONTENT Hooks ─────────────────────────────────────────────────
+  const [contentTitle, setContentTitle] = useState(content.title)
+  const [contentBody,  setContentBody]  = useState(content.body)
+
+  // ─── JOURNEY Hooks ───────────────────────────────────────────────────────
+  const [journeyItems,   setJourneyItems]   = useState<JourneyItem[]>(journeyList)
+  const [journeyFiles,   setJourneyFiles]   = useState<(File | null)[]>(
+    journeyList.map(() => null)
+  )
+  const [journeyPreviews, setJourneyPreviews] = useState<string[]>(
+    journeyList.map(it => it.image)
+  )
+
+  // ─── MEMORY Hooks ────────────────────────────────────────────────────────
+  const [memoryItems,    setMemoryItems]    = useState<MemoryItem[]>(memoryList)
+  const [memoryFiles,    setMemoryFiles]    = useState<(File | null)[]>(
+    memoryList.map(() => null)
+  )
+  const [memoryPreviews, setMemoryPreviews] = useState<string[]>(
+    memoryList.map(m => m.image)
+  )
+
+  // ─── HANDLERS ─────────────────────────────────────────────────────────────
+
+  // Profile
   const onPhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0] ?? null
     setPhotoFile(f)
     if (f) setPhotoPreview(URL.createObjectURL(f))
   }
-  // Save Profile
   const saveProfile = async () => {
     const form = new FormData()
     if (photoFile) form.append('photoFile', photoFile)
-    else           form.append('oldPhoto', photoPreview)
+    else form.append('oldPhoto', photoPreview)
     form.append('about', about)
     form.append('education', education)
     form.append('experience', experience)
     form.append('skills', skills)
+    form.append('contact', contact)
+    form.append('social', social)
     form.append('dob', dob)
-    form.append('location', location)
-    form.append('phone', phone)
-    form.append('email', email)
-    form.append('linkedin', linkedin)
-    form.append('github', github)
-    form.append('twitter', twitter)
-    await axios.post('/api/profile', form)
-    alert('Profil disimpan!')
+
+    await axios.post('/api/profile', form, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    })
+    alert('Profil berhasil disimpan!')
     router.reload()
   }
 
-  // Journey CRUD
+  // Page content
+  const saveContent = async () => {
+    await axios.post('/api/content', {
+      page: content.page,
+      title: contentTitle,
+      body: contentBody,
+    })
+    alert('Konten berhasil disimpan!')
+    router.reload()
+  }
+
+  // Journey
   const addJourney = () => {
     setJourneyItems([
       ...journeyItems,
@@ -143,35 +142,51 @@ export default function AdminEditClient({
     setJourneyFiles([...journeyFiles, null])
     setJourneyPreviews([...journeyPreviews, ''])
   }
-  const updateJourney = (i: number, f: keyof JourneyItem, v: any) => {
-    const a = [...journeyItems]; (a[i] as any)[f] = v; setJourneyItems(a)
+  const updateJourney = (idx: number, field: keyof JourneyItem, value: any) => {
+    const arr = [...journeyItems]
+    // @ts-ignore
+    arr[idx][field] = value
+    setJourneyItems(arr)
   }
-  const onJourneyFileChange = (i: number, e: React.ChangeEvent<HTMLInputElement>) => {
+  const onJourneyFileChange = (idx: number, e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0] ?? null
-    const nf = [...journeyFiles]; nf[i] = f; setJourneyFiles(nf)
+    const newFiles = [...journeyFiles]
+    newFiles[idx] = f
+    setJourneyFiles(newFiles)
     if (f) {
-      const np = [...journeyPreviews]; np[i] = URL.createObjectURL(f); setJourneyPreviews(np)
+      const newPreviews = [...journeyPreviews]
+      newPreviews[idx] = URL.createObjectURL(f)
+      setJourneyPreviews(newPreviews)
     }
   }
-  const saveJourneyItem = async (it: JourneyItem, i: number) => {
+  const saveJourneyItem = async (item: JourneyItem, idx: number) => {
     const form = new FormData()
-    form.append('id', it.id.toString())
-    form.append('order', it.order.toString())
-    form.append('title', it.title)
-    form.append('period', it.period)
-    form.append('description', it.description)
-    if (journeyFiles[i]) form.append('imageFile', journeyFiles[i]!)
-    else                 form.append('oldImage', journeyPreviews[i])
-    await axios.post('/api/journey', form)
-    alert('Tahap disimpan!'); router.reload()
+    form.append('id',       item.id.toString())
+    form.append('order',    item.order.toString())
+    form.append('title',    item.title)
+    form.append('period',   item.period)
+    form.append('description', item.description)
+    if (journeyFiles[idx]) form.append('imageFile', journeyFiles[idx]!)
+    else form.append('oldImage', journeyPreviews[idx])
+
+    await axios.post('/api/journey', form, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    })
+    alert('Tahap perjalanan disimpan!')
+    router.reload()
   }
   const deleteJourneyItem = async (id: number) => {
-    if (!confirm('Hapus tahap?')) return
-    await axios.delete(`/api/journey?id=${id}`)
-    alert('Terhapus!'); router.reload()
+    if (!confirm('Hapus tahap ini?')) return
+    try {
+      await axios.delete(`/api/journey?id=${id}`)
+      alert('Tahap dihapus!')
+      router.reload()
+    } catch {
+      alert('Gagal menghapus tahap.')
+    }
   }
 
-  // Memory CRUD
+  // Memory
   const addMemory = () => {
     setMemoryItems([
       ...memoryItems,
@@ -180,79 +195,48 @@ export default function AdminEditClient({
     setMemoryFiles([...memoryFiles, null])
     setMemoryPreviews([...memoryPreviews, ''])
   }
-  const updateMemory = (i: number, f: keyof MemoryItem, v: any) => {
-    const a = [...memoryItems]; (a[i] as any)[f] = v; setMemoryItems(a)
+  const updateMemory = (idx: number, field: keyof MemoryItem, value: any) => {
+    const arr = [...memoryItems]
+    // @ts-ignore
+    arr[idx][field] = value
+    setMemoryItems(arr)
   }
-  const onMemoryFileChange = (i: number, e: React.ChangeEvent<HTMLInputElement>) => {
+  const onMemoryFileChange = (idx: number, e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0] ?? null
-    const nf = [...memoryFiles]; nf[i] = f; setMemoryFiles(nf)
+    const newFiles = [...memoryFiles]
+    newFiles[idx] = f
+    setMemoryFiles(newFiles)
     if (f) {
-      const np = [...memoryPreviews]; np[i] = URL.createObjectURL(f); setMemoryPreviews(np)
+      const newPreviews = [...memoryPreviews]
+      newPreviews[idx] = URL.createObjectURL(f)
+      setMemoryPreviews(newPreviews)
     }
   }
-  const saveMemoryItem = async (m: MemoryItem, i: number) => {
+  const saveMemoryItem = async (item: MemoryItem, idx: number) => {
     const form = new FormData()
-    form.append('id', m.id.toString())
-    form.append('order', m.order.toString())
-    form.append('label', m.label)
-    if (memoryFiles[i]) form.append('imageFile', memoryFiles[i]!)
-    else                form.append('oldImage', memoryPreviews[i])
-    await axios.post('/api/memory', form)
-    alert('Foto disimpan!'); router.reload()
+    form.append('id',    item.id.toString())
+    form.append('order', item.order.toString())
+    form.append('label', item.label)
+    if (memoryFiles[idx]) form.append('imageFile', memoryFiles[idx]!)
+    else form.append('oldImage', memoryPreviews[idx])
+
+    await axios.post('/api/memory', form, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    })
+    alert('Foto kenangan disimpan!')
+    router.reload()
   }
   const deleteMemoryItem = async (id: number) => {
-    if (!confirm('Hapus foto?')) return
-    await axios.delete(`/api/memory?id=${id}`)
-    alert('Terhapus!'); router.reload()
-  }
-
-  // Blog CRUD
-  const addPost = () => {
-    setPosts([
-      ...posts,
-      { id: 0, title: '', excerpt: '', content: '', image: '', date: new Date().toISOString().slice(0,10) },
-    ])
-    setPostFiles([...postFiles, null])
-    setPostPreviews([...postPreviews, ''])
-  }
-  const updatePost = (i: number, f: keyof PostItem, v: any) => {
-    const a = [...posts]; (a[i] as any)[f] = v; setPosts(a)
-  }
-  const onPostFileChange = (i: number, e: React.ChangeEvent<HTMLInputElement>) => {
-    const f = e.target.files?.[0] ?? null
-    const nf = [...postFiles]; nf[i] = f; setPostFiles(nf)
-    if (f) {
-      const np = [...postPreviews]; np[i] = URL.createObjectURL(f); setPostPreviews(np)
+    if (!confirm('Hapus foto kenangan ini?')) return
+    try {
+      await axios.delete(`/api/memory?id=${id}`)
+      alert('Foto kenangan dihapus!')
+      router.reload()
+    } catch {
+      alert('Gagal menghapus foto.')
     }
   }
-  const savePost = async (p: PostItem, i: number) => {
-    const form = new FormData()
-    form.append('id', p.id.toString())
-    form.append('title', p.title)
-    form.append('excerpt', p.excerpt)
-    form.append('content', p.content)
-    form.append('date', p.date)
-    if (postFiles[i]) form.append('imageFile', postFiles[i]!)
-    else              form.append('oldImage', postPreviews[i])
-    await axios.post('/api/blog', form)
-    alert('Post disimpan!'); router.reload()
-  }
-  const deletePost = async (id: number) => {
-    if (!confirm('Hapus posting?')) return
-    await axios.delete(`/api/blog?id=${id}`)
-    alert('Terhapus!'); router.reload()
-  }
-
-  // Generic page content
-  const saveContent = async () => {
-    await axios.post('/api/content', {
-      page: initialContent.page,
-      title: contentTitle,
-      body: contentBody,
-    })
-    alert('Konten disimpan!'); router.reload()
-  }
-
+  
   // ─── Render by page ───────────────────────────────────────────────────────
   if (page==='profile') {
     return (
