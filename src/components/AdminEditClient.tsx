@@ -15,8 +15,6 @@ import {
   EditPageProps,
 } from '../types/admin'
 import {
-  BookOpen as BlogIcon,
-  Star,
   CameraIcon,
   CheckCircle,
   ImageIcon,
@@ -30,6 +28,8 @@ import {
   Linkedin,
   Github,
   Twitter,
+  BookOpen,
+  Star,
 } from 'lucide-react'
 
 export default function AdminEditClient({
@@ -38,94 +38,12 @@ export default function AdminEditClient({
   initialContent,
   initialJourney,
   initialMemory,
-  posts: initialPosts = []
+  initialPosts = [],
 }: EditPageProps) {
   const { data: session, status } = useSession()
   const router = useRouter()
 
-  // ─── Default wrappers for possibly-missing fields ────────────────────────
-const {
-  location = '',
-  phone = '',
-  email = '',
-  linkedin = '',
-  github = '',
-  twitter = '',
-} = initialProfile?.contact ?? {}
-
-// Sekarang contactData punya semua field sekali saja
-const contactData: ProfileData['contact'] = {
-  location,
-  phone,
-  email,
-  linkedin,
-  github,
-  twitter,
-}
-  // ─── PROFILE state ───────────────────────────────────────────────────────
-  const [photoFile, setPhotoFile] = useState<File | null>(null)
-  const [photoPreview, setPhotoPreview] = useState<string>(
-    initialProfile?.photo ?? ''
-  )
-  const [about, setAbout] = useState<string>(initialProfile?.about ?? '')
-  const [education, setEducation] = useState<string>(
-    (initialProfile?.education ?? []).join('\n')
-  )
-  const [experience, setExperience] = useState<string>(
-    (initialProfile?.experience ?? [])
-      .map((e) => `${e.title}|${e.period}|${e.desc}`)
-      .join('\n')
-  )
-  const [skills, setSkills] = useState<string>(
-    (initialProfile?.skills ?? []).join(',')
-  )
-  const [contactLocation, setContactLocation] = useState<string>(
-    contactData.location
-  )
-  const [contactPhone, setContactPhone] = useState<string>(contactData.phone)
-  const [contactEmail, setContactEmail] = useState<string>(contactData.email)
-  const [contactLinkedin, setContactLinkedin] = useState<string>(
-    contactData.linkedin
-  )
-  const [contactGithub, setContactGithub] = useState<string>(
-    contactData.github
-  )
-  const [contactTwitter, setContactTwitter] = useState<string>(
-    contactData.twitter
-  )
-
-  // ─── PAGE CONTENT state ─────────────────────────────────────────────────
-  const [contentTitle, setContentTitle] = useState<string>(
-    initialContent.title
-  )
-  const [contentBody, setContentBody] = useState<string>(
-    initialContent.body
-  )
-
-  // ─── JOURNEY state ──────────────────────────────────────────────────────
-  const [journeyItems, setJourneyItems] =
-    useState<JourneyItem[]>(initialJourney)
-  const [journeyFiles, setJourneyFiles] = useState<(File | null)[]>(
-    initialJourney.map(() => null)
-  )
-  const [journeyPreviews, setJourneyPreviews] = useState<string[]>(
-    initialJourney.map((it) => it.image)
-  )
-
-  // ─── MEMORY state ───────────────────────────────────────────────────────
-  const [memoryItems, setMemoryItems] =
-    useState<MemoryItem[]>(initialMemory)
-  const [memoryFiles, setMemoryFiles] = useState<(File | null)[]>(
-    initialMemory.map(() => null)
-  )
-  const [memoryPreviews, setMemoryPreviews] = useState<string[]>(
-    initialMemory.map((m) => m.image)
-  )
-  const [memoryDates, setMemoryDates] = useState<string[]>(
-  initialMemory.map((m) => m.date)
-  )
-
-  // ─── Redirect non-admin after session load ───────────────────────────────
+  // ─── Redirect non-admin ─────────────────────────────────────────────
   useEffect(() => {
     if (
       status === 'authenticated' &&
@@ -134,13 +52,35 @@ const contactData: ProfileData['contact'] = {
       router.replace('/login')
     }
   }, [status, session, router])
-
-  // ─── Early returns ──────────────────────────────────────────────────────
-  if (status === 'loading') return <p>Loading...</p>
+  if (status === 'loading') return <p>Loading…</p>
   if (!session || (session.user as any).role !== 'admin') return null
 
-  // ─── HANDLERS ──────────────────────────────────────────────────────────
-  // Profile
+  // ─── PROFILE ────────────────────────────────────────────────────────
+  const contactData = {
+    location: '',
+    phone: '',
+    email: '',
+    linkedin: '',
+    github: '',
+    twitter: '',
+    ...(initialProfile.contact || {}),
+  }
+
+  const [photoFile, setPhotoFile] = useState<File | null>(null)
+  const [photoPreview, setPhotoPreview] = useState(initialProfile.photo)
+  const [about, setAbout] = useState(initialProfile.about)
+  const [education, setEducation] = useState(initialProfile.education.join('\n'))
+  const [experience, setExperience] = useState(
+    initialProfile.experience.map((e) => `${e.title}|${e.period}|${e.desc}`).join('\n')
+  )
+  const [skills, setSkills] = useState(initialProfile.skills.join(','))
+  const [contactLocation, setContactLocation] = useState(contactData.location)
+  const [contactPhone, setContactPhone] = useState(contactData.phone)
+  const [contactEmail, setContactEmail] = useState(contactData.email)
+  const [contactLinkedin, setContactLinkedin] = useState(contactData.linkedin)
+  const [contactGithub, setContactGithub] = useState(contactData.github)
+  const [contactTwitter, setContactTwitter] = useState(contactData.twitter)
+
   const onPhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0] ?? null
     setPhotoFile(f)
@@ -164,22 +104,32 @@ const contactData: ProfileData['contact'] = {
     await axios.post('/api/profile', form, {
       headers: { 'Content-Type': 'multipart/form-data' },
     })
-    alert('Profil berhasil disimpan!')
+    alert('✅ Profil berhasil disimpan!')
     router.reload()
   }
 
-  // Page content
+  // ─── PAGE CONTENT (unused hooks kept in case) ─────────────────────────
+  const [contentTitle, setContentTitle] = useState(initialContent.title)
+  const [contentBody, setContentBody] = useState(initialContent.body)
   const saveContent = async () => {
     await axios.post('/api/content', {
       page: initialContent.page,
       title: contentTitle,
       body: contentBody,
     })
-    alert('Konten berhasil disimpan!')
+    alert('✅ Konten berhasil disimpan!')
     router.reload()
   }
 
-  // Journey
+  // ─── JOURNEY ─────────────────────────────────────────────────────────
+  const [journeyItems, setJourneyItems] = useState<JourneyItem[]>(initialJourney)
+  const [journeyFiles, setJourneyFiles] = useState<(File | null)[]>(
+    initialJourney.map(() => null)
+  )
+  const [journeyPreviews, setJourneyPreviews] = useState<string[]>(
+    initialJourney.map((it) => it.image)
+  )
+
   const addJourney = () => {
     setJourneyItems([
       ...journeyItems,
@@ -221,21 +171,25 @@ const contactData: ProfileData['contact'] = {
     await axios.post('/api/journey', form, {
       headers: { 'Content-Type': 'multipart/form-data' },
     })
-    alert('Tahap perjalanan disimpan!')
+    alert('✅ Tahap perjalanan disimpan!')
     router.reload()
   }
   const deleteJourneyItem = async (id: number) => {
-    if (!confirm('Hapus tahap ini?')) return
-    try {
-      await axios.delete(`/api/journey?id=${id}`)
-      alert('Tahap dihapus!')
-      router.reload()
-    } catch {
-      alert('Gagal menghapus tahap.')
-    }
+    if (!confirm('🗑️ Hapus tahap ini?')) return
+    await axios.delete(`/api/journey?id=${id}`)
+    alert('✅ Tahap dihapus!')
+    router.reload()
   }
 
-  // Memory
+  // ─── MEMORY ──────────────────────────────────────────────────────────
+  const [memoryItems, setMemoryItems] = useState<MemoryItem[]>(initialMemory)
+  const [memoryFiles, setMemoryFiles] = useState<(File | null)[]>(
+    initialMemory.map(() => null)
+  )
+  const [memoryPreviews, setMemoryPreviews] = useState<string[]>(
+    initialMemory.map((m) => m.image)
+  )
+
   const addMemory = () => {
     setMemoryItems([
       ...memoryItems,
@@ -243,16 +197,15 @@ const contactData: ProfileData['contact'] = {
         id: 0,
         order: memoryItems.length + 1,
         label: '',
-        image: '',
-        date: '',      
-        location: '',  
-        isFavorite: false,
+        date: new Date().toISOString().slice(0, 10),
+        location: '',
         description: '',
+        isFavorite: false,
+        image: '',
       },
     ])
     setMemoryFiles([...memoryFiles, null])
     setMemoryPreviews([...memoryPreviews, ''])
-    setMemoryDates([...memoryDates, ''])
   }
   const updateMemory = (idx: number, field: keyof MemoryItem, value: any) => {
     const arr = [...memoryItems]
@@ -274,33 +227,31 @@ const contactData: ProfileData['contact'] = {
       setMemoryPreviews(newPreviews)
     }
   }
-const saveMemoryItem = async (item: MemoryItem, idx: number) => {
-  const form = new FormData()
-  form.append('id', item.id.toString())
-  form.append('order', item.order.toString())
-  form.append('label', item.label)
-  form.append('date', item.date)
-  form.append('location', item.location)
-  if (memoryFiles[idx]) form.append('imageFile', memoryFiles[idx]!)
-  else form.append('oldImage', memoryPreviews[idx])
+  const saveMemoryItem = async (item: MemoryItem, idx: number) => {
+    const form = new FormData()
+    form.append('id', item.id.toString())
+    form.append('order', item.order.toString())
+    form.append('label', item.label)
+    form.append('date', item.date)
+    form.append('location', item.location)
+    form.append('description', item.description)
+    if (memoryFiles[idx]) form.append('imageFile', memoryFiles[idx]!)
+    else form.append('oldImage', memoryPreviews[idx])
 
-  await axios.post('/api/memory', form, {
-    headers: { 'Content-Type': 'multipart/form-data' },
-  })
-  alert('Foto kenangan disimpan!')
-  router.reload()
-}
-  const deleteMemoryItem = async (id: number) => {
-    if (!confirm('Hapus foto kenangan ini?')) return
-    try {
-      await axios.delete(`/api/memory?id=${id}`)
-      alert('Foto kenangan dihapus!')
-      router.reload()
-    } catch {
-      alert('Gagal menghapus foto.')
-    }
+    await axios.post('/api/memory', form, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    })
+    alert('✅ Foto kenangan disimpan!')
+    router.reload()
   }
-  // ─── BLOG state & handlers ────────────────────────────────────────────────
+  const deleteMemoryItem = async (id: number) => {
+    if (!confirm('🗑️ Hapus foto kenangan?')) return
+    await axios.delete(`/api/memory?id=${id}`)
+    alert('✅ Foto kenangan dihapus!')
+    router.reload()
+  }
+
+  // ─── BLOG ────────────────────────────────────────────────────────────
   const [posts, setPosts] = useState<PostItem[]>(initialPosts)
   const [postFiles, setPostFiles] = useState<(File | null)[]>(
     initialPosts.map(() => null)
@@ -308,49 +259,41 @@ const saveMemoryItem = async (item: MemoryItem, idx: number) => {
   const [postPreviews, setPostPreviews] = useState<string[]>(
     initialPosts.map((p) => p.image)
   )
+  const [postDates, setPostDates] = useState<string[]>(
+    initialPosts.map((p) => p.date.slice(0, 10))
+  )
 
   const addPost = () => {
     setPosts([
       ...posts,
-      {
-        id: 0,
-        slug: '',
-        title: '',
-        date: new Date().toISOString(),
-        excerpt: '',
-        content: '',
-        image: '',
-      },
+      { id: 0, slug: '', title: '', date: new Date().toISOString(), excerpt: '', content: '', image: '' },
     ])
     setPostFiles([...postFiles, null])
     setPostPreviews([...postPreviews, ''])
+    setPostDates([...postDates, new Date().toISOString().slice(0, 10)])
   }
-
   const updatePost = (idx: number, field: keyof PostItem, value: any) => {
     const arr = [...posts]
     // @ts-ignore
     arr[idx][field] = value
     setPosts(arr)
   }
-
   const onPostFileChange = (idx: number, e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0] ?? null
-    const files = [...postFiles]
-    files[idx] = f
-    setPostFiles(files)
+    const newFiles = [...postFiles]
+    newFiles[idx] = f
+    setPostFiles(newFiles)
     if (f) {
-      const prev = [...postPreviews]
-      prev[idx] = URL.createObjectURL(f)
-      setPostPreviews(prev)
+      const newPreviews = [...postPreviews]
+      newPreviews[idx] = URL.createObjectURL(f)
+      setPostPreviews(newPreviews)
     }
   }
-
   const savePost = async (post: PostItem, idx: number) => {
     const form = new FormData()
     form.append('id', post.id.toString())
-    form.append('slug', post.slug)
     form.append('title', post.title)
-    form.append('date', post.date)
+    form.append('date', postDates[idx])
     form.append('excerpt', post.excerpt)
     form.append('content', post.content)
     if (postFiles[idx]) form.append('imageFile', postFiles[idx]!)
@@ -359,17 +302,16 @@ const saveMemoryItem = async (item: MemoryItem, idx: number) => {
     await axios.post('/api/blog', form, {
       headers: { 'Content-Type': 'multipart/form-data' },
     })
-    alert('Post berhasil disimpan!')
+    alert('✅ Post berhasil disimpan!')
+    router.reload()
+  }
+  const deletePost = async (id: number) => {
+    if (!confirm('🗑️ Hapus post ini?')) return
+    await axios.delete(`/api/blog?id=${id}`)
+    alert('✅ Post dihapus!')
     router.reload()
   }
 
-  const deletePost = async (id: number) => {
-    if (!confirm('Hapus post ini?')) return
-    await axios.delete(`/api/blog?id=${id}`)
-    alert('Post dihapus!')
-    router.reload()
-  }
-  
   // ─── Render by page ───────────────────────────────────────────────────────
   if (page === 'profile') {
     return (
@@ -802,7 +744,7 @@ const saveMemoryItem = async (item: MemoryItem, idx: number) => {
     )
   }
 
-  if (page === 'blog') {
+   if (page === 'blog') {
     return (
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -811,7 +753,7 @@ const saveMemoryItem = async (item: MemoryItem, idx: number) => {
       >
         <div className="flex items-center justify-between">
           <h1 className="text-3xl font-extrabold flex items-center">
-            <BlogIcon className="mr-2 text-blue-600" /> Edit Blog
+            <BookOpen className="mr-2 text-blue-600" /> Edit Blog
           </h1>
           <motion.button
             onClick={addPost}
@@ -836,8 +778,12 @@ const saveMemoryItem = async (item: MemoryItem, idx: number) => {
               <label className="w-20">📅 Tanggal</label>
               <input
                 type="date"
-                value={post.date.slice(0, 10)}
-                onChange={e => updatePost(idx, 'date', e.target.value)}
+                value={postDates[idx]}
+                onChange={(e) => {
+                  const d = [...postDates]
+                  d[idx] = e.target.value
+                  setPostDates(d)
+                }}
                 className="p-2 border rounded flex-1"
               />
             </div>
@@ -848,19 +794,19 @@ const saveMemoryItem = async (item: MemoryItem, idx: number) => {
               <input
                 type="text"
                 value={post.title}
-                onChange={e => updatePost(idx, 'title', e.target.value)}
+                onChange={(e) => updatePost(idx, 'title', e.target.value)}
                 placeholder="Judul post"
                 className="p-2 border rounded flex-1"
               />
             </div>
 
-            {/* Excerpt */}
+            {/* Ringkasan */}
             <div className="flex items-start space-x-4">
               <label className="w-20 pt-2">✂️ Ringkasan</label>
               <textarea
                 rows={2}
                 value={post.excerpt}
-                onChange={e => updatePost(idx, 'excerpt', e.target.value)}
+                onChange={(e) => updatePost(idx, 'excerpt', e.target.value)}
                 placeholder="Excerpt (ringkasan)"
                 className="w-full p-2 border rounded"
               />
@@ -872,8 +818,8 @@ const saveMemoryItem = async (item: MemoryItem, idx: number) => {
               <textarea
                 rows={4}
                 value={post.content}
-                onChange={e => updatePost(idx, 'content', e.target.value)}
-                placeholder="Tuliskan konten lengkap di sini"
+                onChange={(e) => updatePost(idx, 'content', e.target.value)}
+                placeholder="Konten lengkap"
                 className="w-full p-2 border rounded font-mono"
               />
             </div>
@@ -884,7 +830,7 @@ const saveMemoryItem = async (item: MemoryItem, idx: number) => {
               <input
                 type="file"
                 accept="image/*"
-                onChange={e => onPostFileChange(idx, e)}
+                onChange={(e) => onPostFileChange(idx, e)}
                 className="flex-1"
               />
               {postPreviews[idx] && (
@@ -896,7 +842,7 @@ const saveMemoryItem = async (item: MemoryItem, idx: number) => {
               )}
             </div>
 
-            {/* Tombol Simpan + Hapus */}
+            {/* Simpan + Hapus */}
             <div className="flex items-center space-x-2">
               <motion.button
                 onClick={() => savePost(post, idx)}
@@ -923,7 +869,6 @@ const saveMemoryItem = async (item: MemoryItem, idx: number) => {
     )
   }
 
-  // Default fallback
   return null
 }
 
