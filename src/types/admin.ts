@@ -15,18 +15,16 @@ export interface ProfileData {
     location: string
     phone: string
     email: string
-    linkedin?: string
-    github?: string
-    twitter?: string
+    linkedin: string
+    github: string
+    twitter: string
   }
-  dob?: string      // kalau Anda menyimpan tanggal lahir
 }
 
 export interface PageContentData {
-  page: string
+  page: 'profile' | 'perjalanan-hidup' | 'galeri-kenangan' | 'blog'
   title: string
   body: string
-  posts?: PostItem[]
 }
 
 export interface JourneyItem {
@@ -53,7 +51,7 @@ export interface PostItem {
   id: number
   slug: string
   title: string
-  date: string     // ISO string
+  date: string      // ISO string
   excerpt: string
   content: string
   image: string
@@ -65,5 +63,5 @@ export interface EditPageProps {
   initialContent: PageContentData
   initialJourney: JourneyItem[]
   initialMemory: MemoryItem[]
-  initialPosts?: PostItem[]
+  initialPosts: PostItem[]         // ⬅️ baru
 }
