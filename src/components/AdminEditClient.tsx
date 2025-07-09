@@ -232,7 +232,8 @@ export default function AdminEditClient({
         order: memoryItems.length + 1,
         label: '',
         image: '',
-        date: '',            
+        date: '',      
+        location: '',  
       },
     ])
     setMemoryFiles([...memoryFiles, null])
