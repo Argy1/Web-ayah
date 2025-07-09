@@ -15,16 +15,18 @@ export interface ProfileData {
     location: string
     phone: string
     email: string
-    linkedin: string
-    github: string
-    twitter: string
+    linkedin?: string
+    github?: string
+    twitter?: string
   }
+  dob?: string      // kalau Anda menyimpan tanggal lahir
 }
 
 export interface PageContentData {
   page: string
   title: string
   body: string
+  posts?: PostItem[]
 }
 
 export interface JourneyItem {
@@ -51,22 +53,17 @@ export interface PostItem {
   id: number
   slug: string
   title: string
-  date: string
+  date: string     // ISO string
   excerpt: string
   content: string
   image: string
 }
 
-/**
- * props yang kita kirim dari getServerSideProps
- * – initialContent hanya PageContentData
- * – posts jadi properti terpisah, optional
- */
 export interface EditPageProps {
   page: 'profile' | 'perjalanan-hidup' | 'galeri-kenangan' | 'blog'
   initialProfile: ProfileData
   initialContent: PageContentData
   initialJourney: JourneyItem[]
   initialMemory: MemoryItem[]
-  posts?: PostItem[]
+  initialPosts?: PostItem[]
 }
