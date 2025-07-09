@@ -1,25 +1,23 @@
 // src/types/admin.ts
 
 export interface ProfileData {
+  id: number
   photo: string
   about: string
   education: string[]
-  experience: {
+  experience: Array<{
     title: string
     period: string
     desc: string
-  }[]
+  }>
   skills: string[]
-  dob?: Date
-
-  // Contact sekarang mendukung juga social links
   contact: {
     location: string
     phone: string
     email: string
-    linkedin?: string
-    github?: string
-    twitter?: string
+    linkedin: string
+    github: string
+    twitter: string
   }
 }
 
@@ -42,18 +40,28 @@ export interface MemoryItem {
   id: number
   order: number
   label: string
-  image: string
   date: string
   location: string
+  description: string
   isFavorite: boolean
   image: string
 }
 
-// Props yang dikirimkan ke AdminEditClient
+export interface PostItem {
+  id: number
+  slug: string
+  title: string
+  date: string
+  excerpt: string
+  content: string
+  image: string
+}
+
 export interface EditPageProps {
-  page: 'profile' | 'perjalanan-hidup' | 'galeri-kenangan' | 'blog' | 'motivasi-inspirasi' | 'pelajaran-hidup'
-  initialProfile?: ProfileData
+  page: 'profile' | 'perjalanan-hidup' | 'galeri-kenangan' | 'blog'
+  initialProfile: ProfileData
   initialContent: PageContentData
   initialJourney: JourneyItem[]
   initialMemory: MemoryItem[]
+  posts?: PostItem[]
 }
