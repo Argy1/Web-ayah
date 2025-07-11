@@ -127,11 +127,51 @@ export default function Profile({
   )
 }
 
-export const getServerSideProps: GetServerSideProps<ProfileProps> = async () => {
-  const data = await prisma.profile.findFirst()
-  if (!data) {
-    return { notFound: true }
+export const getServerSideProps: GetServerSideProps = async () => {
+  try {
+    const data = await prisma.profile.findFirst()
+    if (!data) {
+      return {
+        props: {
+          photo: '',
+          about: '',
+          education: [],
+          experience: [],
+          skills: [],
+          contact: { location: '', phone: '', email: '' },
+          social: { linkedin: '', github: '', twitter: '' },
+          updatedAt: new Date().toISOString(),
+        },
+      }
+    }
+    return {
+      props: {
+        photo: data.photo,
+        about: data.about,
+        education: data.education,
+        experience: data.experience,
+        skills: data.skills,
+        contact: data.contact,
+        social: data.social,
+        updatedAt: data.updatedAt.toISOString(),
+      },
+    }
+  } catch (e) {
+    console.error(e)
+    return {
+      props: {
+        photo: '',
+        about: '',
+        education: [],
+        experience: [],
+        skills: [],
+        contact: { location: '', phone: '', email: '' },
+        social: { linkedin: '', github: '', twitter: '' },
+        updatedAt: new Date().toISOString(),
+      },
+    }
   }
+}
 
   // parsing education
   const education: string[] = Array.isArray(data.education)
