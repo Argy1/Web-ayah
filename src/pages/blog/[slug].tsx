@@ -1,4 +1,4 @@
-// pages/blog/[slug].tsx
+// src/pages/blog/[slug].tsx
 import { GetStaticPaths, GetStaticProps } from 'next'
 import Link from 'next/link'
 import { Calendar as CalendarIcon } from 'lucide-react'
@@ -18,9 +18,7 @@ export default function PostItemPage({ post }: Props) {
           {new Date(post.date).toLocaleDateString()}
         </time>
       </header>
-
       <h1>{post.title}</h1>
-
       {post.image && (
         <img
           src={post.image}
@@ -28,11 +26,9 @@ export default function PostItemPage({ post }: Props) {
           className="w-full rounded"
         />
       )}
-
       <p>{post.excerpt}</p>
       <div dangerouslySetInnerHTML={{ __html: post.content }} />
-
-      <p>
+      <p className="mt-8">
         <Link href="/blog">← Back to all posts</Link>
       </p>
     </article>
@@ -41,10 +37,9 @@ export default function PostItemPage({ post }: Props) {
 
 export const getStaticPaths: GetStaticPaths = async () => {
   // Ambil semua slug dari DB
-  const posts = await prisma.BlogPost.findMany({
+  const posts = await prisma.blogPost.findMany({
     select: { slug: true },
   })
-
   const paths = posts
     .filter((p) => typeof p.slug === 'string' && p.slug.trim() !== '')
     .map((p) => ({ params: { slug: p.slug } }))
@@ -55,30 +50,28 @@ export const getStaticPaths: GetStaticPaths = async () => {
   }
 }
 
-export const getStaticProps: GetStaticProps<Props> = async ({ params }) => {
+export const getStaticProps: GetStaticProps = async ({ params }) => {
   const slug = params?.slug as string
   if (!slug) {
     return { notFound: true }
   }
 
-  // Ganti prisma.blogpost → prisma.blogPost
-  const post = await prisma.BlogPost.findUnique({
+  const postData = await prisma.blogPost.findUnique({
     where: { slug },
   })
-
-  if (!post) {
+  if (!postData) {
     return { notFound: true }
   }
 
-  // Serialize date jadi string supaya Next.js bisa kirim props
+  // Serialize Date → string supaya Next.js bisa kirim props
   const formatted: PostItem = {
-    id: post.id,
-    slug: post.slug,
-    title: post.title,
-    date: post.date.toISOString(),
-    excerpt: post.excerpt,
-    content: post.content,
-    image: post.image ?? '',
+    id: postData.id,
+    slug: postData.slug,
+    title: postData.title,
+    date: postData.date.toISOString(),
+    excerpt: postData.excerpt,
+    content: postData.content,
+    image: postData.image ?? '',
   }
 
   return {
