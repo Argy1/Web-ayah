@@ -31,7 +31,7 @@ export default function PostItemPage({ post }: Props) {
 
 export const getStaticPaths: GetStaticPaths = async () => {
   // grab all slugs
-  const posts = await prisma.PostItem.findMany({ select: { slug: true } })
+  const posts = await prisma.blogpost.findMany({ select: { slug: true } })
 
   const paths = posts
     // filter out any empty‐string slugs
