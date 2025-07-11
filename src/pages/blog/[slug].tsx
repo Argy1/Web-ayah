@@ -9,7 +9,7 @@ interface Props {
   post: PostItem
 }
 
-export default function BlogPostPage({ post }: Props) {
+export default function PostItemPage({ post }: Props) {
   return (
     <article className="prose lg:prose-xl mx-auto">
       <header className="flex items-center space-x-2">
@@ -31,7 +31,7 @@ export default function BlogPostPage({ post }: Props) {
 
 export const getStaticPaths: GetStaticPaths = async () => {
   // grab all slugs
-  const posts = await prisma.blogPost.findMany({ select: { slug: true } })
+  const posts = await prisma.PostItem.findMany({ select: { slug: true } })
 
   const paths = posts
     // filter out any empty‐string slugs
@@ -53,7 +53,7 @@ export const getStaticProps: GetStaticProps<Props> = async ({ params }) => {
     return { notFound: true }
   }
 
-  const post = await prisma.blogPost.findUnique({
+  const post = await prisma.PostItem.findUnique({
     where: { slug },
   })
 
