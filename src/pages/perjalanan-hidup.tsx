@@ -109,15 +109,29 @@ export default function PerjalananHidup({ journeyItems, memoryItems }: Props) {
   )
 }
 
-export const getServerSideProps: GetServerSideProps<Props> = async () => {
-  // Ambil semua record; karena kita instantiate PrismaClient di atas,
-  // journeyItem dan memoryItem pasti terdefinisi jika modelnya ada di schema.
-  const journeyItems = await prisma.journeyItem.findMany({
-    orderBy: { order: 'asc' },
-  })
-  const memoryItems = await prisma.memoryItem.findMany({
-    orderBy: { order: 'asc' },
-  })
+export const getServerSideProps: GetServerSideProps = async () => {
+  try {
+    const journey = await prisma.journeyItem.findMany({ orderBy: { order: 'asc' } })
+    const memories = await prisma.memoryItem.findMany({ orderBy: { order: 'asc' } })
+    return {
+      props: {
+        journeyItems: journey,
+        memoryItems: memories.map(m => ({
+          ...m,
+          date: m.date.toISOString(),
+        })),
+      },
+    }
+  } catch (e) {
+    console.error(e)
+    return {
+      props: {
+        journeyItems: [],
+        memoryItems: [],
+      },
+    }
+  }
+}
 
   // Tutup koneksi jika perlu (opsional)
   await prisma.$disconnect()
