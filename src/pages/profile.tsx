@@ -1,6 +1,6 @@
 // src/pages/profile.tsx
 
-import { GetStaticProps } from 'next'
+import { GetServerSideProps } from 'next'
 import Image from 'next/image'
 import { prisma } from '../lib/prisma'
 import {
@@ -127,17 +127,13 @@ export default function Profile({
   )
 }
 
-export const getStaticProps: GetStaticProps<ProfileProps> = async () => {
+export const getServerSideProps: GetServerSideProps<ProfileProps> = async () => {
   const data = await prisma.profile.findFirst()
   if (!data) {
     return { notFound: true }
   }
-  return {
-    props: { data },
-    revalidate: 60, // jika kamu ingin ISR; atau hilangkan kalau cukup sekali build
-  }
+  return { props: { data } }
 }
-
   // parsing education
   const education: string[] = Array.isArray(data.education)
     ? data.education.filter((e): e is string => typeof e === 'string')
