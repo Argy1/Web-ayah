@@ -12,7 +12,7 @@ import {
   MemoryItem,
   PostItem,
   EditPageProps,
-} from '../types/admin'
+} from '../../types/admin'
 
 export const getServerSideProps: GetServerSideProps<EditPageProps> = async (ctx) => {
   // 1) Cek session + role
