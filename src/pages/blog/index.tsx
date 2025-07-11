@@ -48,12 +48,11 @@ export default function BlogIndex({ posts }: Props) {
 }
 
 export const getStaticProps: GetStaticProps<Props> = async () => {
-  // Ambil semua posting, urutkan terbaru dulu
+  // Ambil semua post, urutkan terbaru dulu
   const rawPosts = await prisma.blogPost.findMany({
     orderBy: { date: 'desc' },
   })
 
-  // Format agar cocok dengan interface PostItem
   const posts: PostItem[] = rawPosts.map((p) => ({
     id: p.id,
     slug: p.slug,
@@ -66,7 +65,6 @@ export const getStaticProps: GetStaticProps<Props> = async () => {
 
   return {
     props: { posts },
-    revalidate: 60, // ISR: rebuild tiap 60 detik
+    revalidate: 60,
   }
 }
-```0
