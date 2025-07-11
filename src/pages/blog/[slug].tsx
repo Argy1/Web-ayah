@@ -19,16 +19,10 @@ export default function PostItemPage({ post }: Props) {
         </time>
       </header>
       <h1>{post.title}</h1>
-      {post.image && (
-        <img
-          src={post.image}
-          alt={post.title}
-          className="w-full rounded"
-        />
-      )}
+      {post.image && <img src={post.image} alt={post.title} className="w-full rounded" />}
       <p>{post.excerpt}</p>
       <div dangerouslySetInnerHTML={{ __html: post.content }} />
-      <p className="mt-8">
+      <p className="mt-6">
         <Link href="/blog">← Back to all posts</Link>
       </p>
     </article>
@@ -36,46 +30,29 @@ export default function PostItemPage({ post }: Props) {
 }
 
 export const getStaticPaths: GetStaticPaths = async () => {
-  // Ambil semua slug dari DB
   const posts = await prisma.blogPost.findMany({
     select: { slug: true },
   })
-  const paths = posts
-    .filter((p) => typeof p.slug === 'string' && p.slug.trim() !== '')
-    .map((p) => ({ params: { slug: p.slug } }))
-
-  return {
-    paths,
-    fallback: 'blocking',
-  }
+  const paths = posts.map((p) => ({ params: { slug: p.slug } }))
+  return { paths, fallback: 'blocking' }
 }
 
 export const getStaticProps: GetStaticProps = async ({ params }) => {
   const slug = params?.slug as string
-  if (!slug) {
-    return { notFound: true }
-  }
+  if (!slug) return { notFound: true }
 
-  const postData = await prisma.blogPost.findUnique({
-    where: { slug },
-  })
-  if (!postData) {
-    return { notFound: true }
-  }
+  const post = await prisma.blogPost.findUnique({ where: { slug } })
+  if (!post) return { notFound: true }
 
-  // Serialize Date → string supaya Next.js bisa kirim props
   const formatted: PostItem = {
-    id: postData.id,
-    slug: postData.slug,
-    title: postData.title,
-    date: postData.date.toISOString(),
-    excerpt: postData.excerpt,
-    content: postData.content,
-    image: postData.image ?? '',
+    id: post.id,
+    slug: post.slug,
+    title: post.title,
+    date: post.date.toISOString(),
+    excerpt: post.excerpt,
+    content: post.content,
+    image: post.image ?? '',
   }
 
-  return {
-    props: { post: formatted },
-    revalidate: 60, // ISR: regenerasi tiap 60 detik
-  }
+  return { props: { post: formatted }, revalidate: 60 }
 }
