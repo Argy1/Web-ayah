@@ -6,7 +6,7 @@ import { PrismaClient } from '@prisma/client'
 import { BookOpen, Calendar as CalIcon, Award } from 'lucide-react'
 
 // Buat PrismaClient secara langsung
-const prisma = new PrismaClient()
+import { prisma } from '../lib/prisma'
 
 // Tipe data untuk Journey dan Memory
 export type JourneyItem = {
