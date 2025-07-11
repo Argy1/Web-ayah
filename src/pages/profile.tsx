@@ -1,4 +1,4 @@
-// src/pages/profile.tsx
+/ src/pages/profile.tsx
 
 import { GetServerSideProps } from 'next'
 import Image from 'next/image'
@@ -127,12 +127,11 @@ export default function Profile({
   )
 }
 
+
 export const getServerSideProps: GetServerSideProps<ProfileProps> = async () => {
-  const data = await prisma.profile.findFirst()
-  if (!data) {
-    return { notFound: true }
-  }
-  return { props: { data } }
+const data = await prisma.profile.findFirst()
+if (!data) {
+return { notFound: true }
 }
   // parsing education
   const education: string[] = Array.isArray(data.education)
