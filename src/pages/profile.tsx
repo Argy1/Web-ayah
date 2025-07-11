@@ -1,38 +1,16 @@
 // src/pages/profile.tsx
-
 import { GetServerSideProps } from 'next'
 import Image from 'next/image'
 import { prisma } from '../lib/prisma'
-import {
-  Calendar as CalendarIcon,
-  MapPin,
-  Phone,
-  Mail,
-  Linkedin,
-  Github,
-  Twitter,
-} from 'lucide-react'
 
 interface ProfileProps {
   photo: string
   about: string
   education: string[]
-  experience: Array<{
-    title: string
-    period: string
-    desc: string
-  }>
+  experience: Array<{ title: string; period: string; desc: string }>
   skills: string[]
-  contact: {
-    location: string
-    phone: string
-    email: string
-  }
-  social: {
-    linkedin: string
-    github: string
-    twitter: string
-  }
+  contact: { location: string; phone: string; email: string }
+  social: { linkedin: string; github: string; twitter: string }
   updatedAt: string
 }
 
@@ -47,144 +25,101 @@ export default function Profile({
   updatedAt,
 }: ProfileProps) {
   return (
-    <div className="max-w-3xl mx-auto p-8 space-y-8">
+    <div>
       {/* Foto */}
-      <div className="flex justify-center">
-        <Image
-          src={photo}
-          alt="Foto Profil"
-          width={150}
-          height={150}
-          className="rounded-full"
-        />
-      </div>
+      <Image
+        src={photo}
+        alt="Foto Profil"
+        width={200}
+        height={200}
+        className="rounded-full mx-auto"
+      />
 
       {/* Tentang Saya */}
-      <section>
-        <h2 className="text-xl font-semibold mb-2">Tentang Saya</h2>
-        <p>{about}</p>
-      </section>
+      <h2 className="mt-6 text-xl font-semibold">Tentang Saya</h2>
+      <p>{about}</p>
 
       {/* Pendidikan */}
-      <section>
-        <h2 className="text-xl font-semibold mb-2">Pendidikan</h2>
-        <ul className="list-disc list-inside">
-          {education.map((edu, i) => (
-            <li key={i}>{edu}</li>
-          ))}
-        </ul>
-      </section>
+      <h2 className="mt-6 text-xl font-semibold">Pendidikan</h2>
+      <ul className="list-disc pl-5">
+        {education.map((edu, i) => (
+          <li key={i}>{edu}</li>
+        ))}
+      </ul>
 
       {/* Pengalaman */}
-      <section>
-        <h2 className="text-xl font-semibold mb-2">Pengalaman</h2>
-        {experience.map((exp, i) => (
-          <div key={i} className="mb-4">
-            <h3 className="font-medium">{exp.title}</h3>
-            <span className="text-sm text-gray-600">{exp.period}</span>
-            <p>{exp.desc}</p>
-          </div>
-        ))}
-      </section>
+      <h2 className="mt-6 text-xl font-semibold">Pengalaman</h2>
+      {experience.map((exp, i) => (
+        <div key={i} className="mb-4">
+          <h3 className="text-lg font-medium">{exp.title}</h3>
+          <p className="text-sm text-gray-600">{exp.period}</p>
+          <p>{exp.desc}</p>
+        </div>
+      ))}
 
       {/* Keahlian */}
-      <section>
-        <h2 className="text-xl font-semibold mb-2">Keahlian</h2>
-        <p>{skills.join(', ')}</p>
-      </section>
+      <h2 className="mt-6 text-xl font-semibold">Keahlian</h2>
+      <p>{skills.join(', ')}</p>
 
       {/* Kontak & Sosial Media */}
-      <section>
-        <h2 className="text-xl font-semibold mb-2">Kontak & Sosial Media</h2>
-        <ul className="space-y-2">
-          <li className="flex items-center">
-            <MapPin className="mr-2 text-indigo-500" /> {contact.location}
-          </li>
-          <li className="flex items-center">
-            <Phone className="mr-2 text-indigo-500" /> {contact.phone}
-          </li>
-          <li className="flex items-center">
-            <Mail className="mr-2 text-indigo-500" /> {contact.email}
-          </li>
-          <li className="flex items-center">
-            <Linkedin className="mr-2 text-indigo-500" /> {social.linkedin}
-          </li>
-          <li className="flex items-center">
-            <Github className="mr-2 text-indigo-500" /> {social.github}
-          </li>
-          <li className="flex items-center">
-            <Twitter className="mr-2 text-indigo-500" /> {social.twitter}
-          </li>
-        </ul>
-      </section>
+      <h2 className="mt-6 text-xl font-semibold">Kontak & Sosial Media</h2>
+      <ul className="list-none">
+        <li>📍 {contact.location}</li>
+        <li>📞 {contact.phone}</li>
+        <li>✉️ {contact.email}</li>
+        <li>🔗 <a href={social.linkedin} target="_blank">LinkedIn</a></li>
+        <li>🐙 <a href={social.github} target="_blank">GitHub</a></li>
+        <li>🐦 <a href={social.twitter} target="_blank">Twitter</a></li>
+      </ul>
 
-      {/* Terakhir Update */}
-      <section className="text-sm text-gray-600 flex items-center">
-        <CalendarIcon className="mr-2" /> Terakhir diperbarui:{' '}
-        {new Date(updatedAt).toLocaleString()}
-      </section>
+      <p className="mt-6 text-sm text-gray-500">
+        Terakhir diperbarui: {new Date(updatedAt).toLocaleString()}
+      </p>
     </div>
   )
 }
 
-export const getServerSideProps: GetServerSideProps<ProfileProps> = async () => {
-  const data = await prisma.profile.findFirst()
-  if (!data) {
+export const getServerSideProps: GetServerSideProps = async () => {
+  try {
+    const data = await prisma.profile.findFirst()
+    if (!data) return { notFound: true }
+
+    // parsing JSON fields
+    const education = Array.isArray(data.education) ? data.education : []
+    const experience = Array.isArray(data.experience)
+      ? data.experience.map((item: any) => ({
+          title: item.title ?? '',
+          period: item.period ?? '',
+          desc: item.desc ?? '',
+        }))
+      : []
+    const skills = Array.isArray(data.skills) ? data.skills : []
+    const contactObj = typeof data.contact === 'object' ? data.contact : {}
+    const contact = {
+      location: contactObj.location ?? '',
+      phone: contactObj.phone ?? '',
+      email: contactObj.email ?? '',
+    }
+    const social = {
+      linkedin: (contactObj as any).linkedin ?? '',
+      github: (contactObj as any).github ?? '',
+      twitter: (contactObj as any).twitter ?? '',
+    }
+
+    return {
+      props: {
+        photo: data.photo,
+        about: data.about,
+        education,
+        experience,
+        skills,
+        contact,
+        social,
+        updatedAt: data.updatedAt.toISOString(),
+      },
+    }
+  } catch (e) {
+    console.error(e)
     return { notFound: true }
-  }
-
-  // parsing education
-  const education: string[] = Array.isArray(data.education)
-    ? data.education.filter((e): e is string => typeof e === 'string')
-    : []
-
-  // parsing experience
-  const rawExp = Array.isArray(data.experience) ? data.experience : []
-  const experience = rawExp.map(item => ({
-    title: typeof (item as any).title === 'string' ? (item as any).title : '',
-    period: typeof (item as any).period === 'string' ? (item as any).period : '',
-    desc: typeof (item as any).desc === 'string' ? (item as any).desc : '',
-  }))
-
-  // parsing skills
-  const skills: string[] = Array.isArray(data.skills)
-    ? data.skills.filter((s): s is string => typeof s === 'string')
-    : []
-
-  // guard untuk contact JSON
-  const rawContact = data.contact
-  const contactObj =
-    typeof rawContact === 'object' &&
-    rawContact !== null &&
-    !Array.isArray(rawContact)
-      ? (rawContact as Record<string, unknown>)
-      : {}
-
-  const contact = {
-    location: typeof contactObj.location === 'string' ? contactObj.location : '',
-    phone: typeof contactObj.phone === 'string' ? contactObj.phone : '',
-    email: typeof contactObj.email === 'string' ? contactObj.email : '',
-  }
-  const social = {
-    linkedin:
-      typeof contactObj.linkedin === 'string' ? contactObj.linkedin : '',
-    github: typeof contactObj.github === 'string' ? contactObj.github : '',
-    twitter: typeof contactObj.twitter === 'string' ? contactObj.twitter : '',
-  }
-
-  // updatedAt
-  const updatedAt = data.updatedAt.toISOString()
-
-  return {
-    props: {
-      photo: data.photo,
-      about: data.about,
-      education,
-      experience,
-      skills,
-      contact,
-      social,
-      updatedAt,
-    },
   }
 }
