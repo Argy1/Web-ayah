@@ -83,15 +83,21 @@ export default function AdminEditClient({
     if (photoFile) form.append('photoFile', photoFile)
     else form.append('oldPhoto', photoPreview)
     form.append('about', about)
-    form.append('education', education)
-    form.append('experience', experience)
-    form.append('skills', skills)
-    form.append('location', contactLocation)
-    form.append('phone', contactPhone)
-    form.append('email', contactEmail)
-    form.append('linkedin', contactLinkedin)
-    form.append('github', contactGithub)
-    form.append('twitter', contactTwitter)
+form.append('education', education)
+form.append('experience', experience)
+form.append('skills', skills)
+form.append(
+  'contact',
+  JSON.stringify({
+    location: contactLocation,
+    phone: contactPhone,
+    email: contactEmail,
+    linkedin: contactLinkedin,
+    github: contactGithub,
+    twitter: contactTwitter,
+  })
+)
+
 
     await axios.post('/api/profile', form, {
       headers: { 'Content-Type': 'multipart/form-data' },
