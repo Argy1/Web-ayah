@@ -2,7 +2,6 @@
 import { GetStaticProps } from 'next'
 import Link from 'next/link'
 import { Calendar as CalendarIcon } from 'lucide-react'
-import { prisma } from '../../lib/prisma'
 import { PostItem } from '../../types/admin'
 
 interface Props {
@@ -48,6 +47,7 @@ export default function BlogIndex({ posts }: Props) {
 }
 
 export const getStaticProps: GetStaticProps<Props> = async () => {
+  const { prisma } = await import('../../lib/prisma')
   // Ambil semua post, urutkan terbaru dulu
   const rawPosts = await prisma.blogPost.findMany({
     orderBy: { date: 'desc' },
