@@ -2,11 +2,7 @@
 import React from 'react'
 import Image from 'next/image'
 import { GetServerSideProps } from 'next'
-import { PrismaClient } from '@prisma/client'
 import { BookOpen, Calendar as CalIcon, Award } from 'lucide-react'
-
-// Buat PrismaClient secara langsung
-const prisma = new PrismaClient()
 
 // Tipe data untuk Journey dan Memory
 export type JourneyItem = {
@@ -69,20 +65,17 @@ export default function PerjalananHidup({ journeyItems, memoryItems }: Props) {
         )}
 
         <div className="text-center">
-          <h2 className="text-3xl font-bold dark:text-white">
-          </h2>
+          <h2 className="text-3xl font-bold dark:text-white"></h2>
           {/* Anda bisa menampilkan satu item journey dengan title "Penghargaan" */}
         </div>
 
         <div>
           <h2 className="text-3xl font-bold mb-6 text-center dark:text-white">
-            📸 Dokumentasi Kenangan
+            Dokumentasi Kenangan
           </h2>
 
           {memoryItems.length === 0 ? (
-            <p className="text-center text-gray-600 dark:text-gray-300">
-              
-            </p>
+            <p className="text-center text-gray-600 dark:text-gray-300"></p>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
               {memoryItems.map((m) => (
@@ -110,8 +103,8 @@ export default function PerjalananHidup({ journeyItems, memoryItems }: Props) {
 }
 
 export const getServerSideProps: GetServerSideProps<Props> = async () => {
-  // Ambil semua record; karena kita instantiate PrismaClient di atas,
-  // journeyItem dan memoryItem pasti terdefinisi jika modelnya ada di schema.
+  // Impor prisma hanya di sisi server agar tidak dibundel ke klien
+  const { prisma } = await import('../lib/prisma')
   const journeyItems = await prisma.journeyItem.findMany({
     orderBy: { order: 'asc' },
   })
@@ -119,10 +112,6 @@ export const getServerSideProps: GetServerSideProps<Props> = async () => {
     orderBy: { order: 'asc' },
   })
 
-  // Tutup koneksi jika perlu (opsional)
-  await prisma.$disconnect()
-
-  // Pastikan data serializable
   return {
     props: {
       journeyItems: JSON.parse(JSON.stringify(journeyItems)),
