@@ -1,7 +1,6 @@
-// pages/blog.tsx
+// src/pages/blog.tsx
 import { GetStaticProps } from 'next'
 import Link from 'next/link'
-import { prisma } from '../lib/prisma'
 import { PostItem } from '../types/admin'
 import { Calendar as CalendarIcon } from 'lucide-react'
 
@@ -16,7 +15,9 @@ export default function BlogList({ posts }: Props) {
         <article key={post.slug} className="border-b pb-4">
           <header className="flex items-center space-x-2">
             <CalendarIcon className="text-gray-500" />
-            <time dateTime={post.date}>{new Date(post.date).toLocaleDateString()}</time>
+            <time dateTime={post.date}>
+              {new Date(post.date).toLocaleDateString()}
+            </time>
           </header>
           <h2 className="text-xl font-semibold">
             <Link href={`/blog/${post.slug}`}>{post.title}</Link>
@@ -29,6 +30,7 @@ export default function BlogList({ posts }: Props) {
 }
 
 export const getStaticProps: GetStaticProps<Props> = async () => {
+  const { prisma } = await import('../lib/prisma')
   const raw = await prisma.blogPost.findMany({
     orderBy: { date: 'desc' },
   })
