@@ -1,8 +1,6 @@
 // src/pages/profile.tsx
-
 import { GetServerSideProps } from 'next'
 import Image from 'next/image'
-import { prisma } from '../lib/prisma'
 import {
   Calendar as CalendarIcon,
   MapPin,
@@ -128,6 +126,7 @@ export default function Profile({
 }
 
 export const getServerSideProps: GetServerSideProps<ProfileProps> = async () => {
+  const { prisma } = await import('../lib/prisma')
   const data = await prisma.profile.findFirst()
   if (!data) {
     return { notFound: true }
@@ -140,9 +139,10 @@ export const getServerSideProps: GetServerSideProps<ProfileProps> = async () => 
 
   // parsing experience
   const rawExp = Array.isArray(data.experience) ? data.experience : []
-  const experience = rawExp.map(item => ({
+  const experience = rawExp.map((item) => ({
     title: typeof (item as any).title === 'string' ? (item as any).title : '',
-    period: typeof (item as any).period === 'string' ? (item as any).period : '',
+    period:
+      typeof (item as any).period === 'string' ? (item as any).period : '',
     desc: typeof (item as any).desc === 'string' ? (item as any).desc : '',
   }))
 
@@ -151,25 +151,43 @@ export const getServerSideProps: GetServerSideProps<ProfileProps> = async () => 
     ? data.skills.filter((s): s is string => typeof s === 'string')
     : []
 
-  // guard untuk contact JSON
+  // guard untuk contact JSON dan dukung social nested
   const rawContact = data.contact
   const contactObj =
     typeof rawContact === 'object' &&
     rawContact !== null &&
     !Array.isArray(rawContact)
-      ? (rawContact as Record<string, unknown>)
+      ? (rawContact as Record<string, any>)
       : {}
-
+  const socialData =
+    typeof contactObj.social === 'object' && contactObj.social !== null
+      ? (contactObj.social as Record<string, any>)
+      : {}
   const contact = {
-    location: typeof contactObj.location === 'string' ? contactObj.location : '',
+    location:
+      typeof contactObj.location === 'string' ? contactObj.location : '',
     phone: typeof contactObj.phone === 'string' ? contactObj.phone : '',
     email: typeof contactObj.email === 'string' ? contactObj.email : '',
   }
   const social = {
     linkedin:
-      typeof contactObj.linkedin === 'string' ? contactObj.linkedin : '',
-    github: typeof contactObj.github === 'string' ? contactObj.github : '',
-    twitter: typeof contactObj.twitter === 'string' ? contactObj.twitter : '',
+      typeof contactObj.linkedin === 'string'
+        ? contactObj.linkedin
+        : typeof socialData.linkedin === 'string'
+        ? socialData.linkedin
+        : '',
+    github:
+      typeof contactObj.github === 'string'
+        ? contactObj.github
+        : typeof socialData.github === 'string'
+        ? socialData.github
+        : '',
+    twitter:
+      typeof contactObj.twitter === 'string'
+        ? contactObj.twitter
+        : typeof socialData.twitter === 'string'
+        ? socialData.twitter
+        : '',
   }
 
   // updatedAt
