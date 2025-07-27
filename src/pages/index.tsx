@@ -1,51 +1,70 @@
-// src/pages/index.tsx
-import React from 'react'
+// src/pages/blog/index.tsx
+import { GetStaticProps } from 'next'
 import Link from 'next/link'
-import {
-  User,
-  BookOpen,
-  Briefcase,
-  Camera,
-  MessageCircle,
-  Heart,
-  Mail,
-} from 'lucide-react'
+import { Calendar as CalendarIcon } from 'lucide-react'
+import { PostItem } from '../../types/admin'
 
-const cards = [
-  { href: '/profile', label: 'Profil', icon: User },
-  { href: '/perjalanan-hidup', label: 'Perjalanan Hidup', icon: BookOpen },
-  { href: '/pelajaran-hidup', label: 'Pelajaran Hidup', icon: Briefcase },
-  { href: '/galeri-kenangan', label: 'Galeri & Kenangan', icon: Camera },
-  { href: '/blog', label: 'Blog', icon: MessageCircle },
-  { href: '/motivasi-inspirasi', label: 'Motivasi', icon: Heart },
-  { href: '/contact', label: 'Kontak', icon: Mail },
-]
+interface Props {
+  posts: PostItem[]
+}
 
-export default function Home() {
+export default function BlogIndex({ posts }: Props) {
   return (
-    <section className="relative min-h-screen flex items-center justify-center bg-gradient-to-br from-green-400 to-blue-500 dark:from-gray-800 dark:to-black text-white py-20 overflow-hidden">
-      {/* Decorative floating circle */}
-      <div className="absolute -left-32 -top-32 w-64 h-64 bg-white/20 dark:bg-gray-700/20 rounded-full blur-3xl animate-pulse"></div>
-      <div className="container mx-auto px-6 text-center relative space-y-8">
-        <h1 className="text-6xl font-extrabold drop-shadow-lg">
-          👋 Selamat Datang di Situs Saya!
-        </h1>
-        <p className="text-xl max-w-3xl mx-auto drop-shadow-md">
-          Saya Aris, <strong>Pengurus Pusat PDPI</strong> dan penulis. Di sini Anda dapat menjelajahi profil, perjalanan hidup, pelajaran berharga, galeri kenangan, blog, motivasi, dan cara menghubungi saya.
-        </p>
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 mt-12">
-          {cards.map(({ href, label, icon: Icon }) => (
-            <Link key={href} href={href} className="group">
-              <div className="p-6 bg-white/30 dark:bg-white/30 backdrop-blur-md rounded-lg shadow-lg hover:shadow-2xl transform hover:scale-105 transition flex flex-col items-center">
-                <Icon size={48} className="mb-4 text-white group-hover:text-indigo-200" />
-                <span className="font-semibold text-lg text-white dark:text-white">
-                  {label}
-                </span>
+    <main className="prose lg:prose-xl mx-auto py-8">
+      <h1 className="text-4xl font-bold mb-6">Blog</h1>
+      <div className="grid gap-8 md:grid-cols-2">
+        {posts.map((post) => (
+          <article
+            key={post.id}
+            className="border rounded-lg overflow-hidden hover:shadow-lg transition-shadow"
+          >
+            {post.image && (
+              <img
+                src={post.image}
+                alt={post.title}
+                className="w-full h-48 object-cover"
+              />
+            )}
+            <div className="p-4">
+              <h2 className="text-2xl font-semibold mb-2">
+                <Link href={`/blog/${post.slug}`}>
+                  <a className="hover:underline">{post.title}</a>
+                </Link>
+              </h2>
+              <div className="flex items-center text-gray-500 text-sm mb-4">
+                <CalendarIcon className="inline-block mr-1" />
+                <time dateTime={post.date}>
+                  {new Date(post.date).toLocaleDateString()}
+                </time>
               </div>
-            </Link>
-          ))}
-        </div>
+              <p className="text-gray-700">{post.excerpt}</p>
+            </div>
+          </article>
+        ))}
       </div>
-    </section>
+    </main>
   )
-}   
+}
+
+export const getStaticProps: GetStaticProps<Props> = async () => {
+  const { prisma } = await import('../../lib/prisma')
+  // Ambil semua post, urutkan terbaru dulu
+  const rawPosts = await prisma.blogPost.findMany({
+    orderBy: { date: 'desc' },
+  })
+
+  const posts: PostItem[] = rawPosts.map((p) => ({
+    id: p.id,
+    slug: p.slug,
+    title: p.title,
+    date: p.date.toISOString(),
+    excerpt: p.excerpt,
+    image: p.image ?? '',
+    content: p.content,
+  }))
+
+  return {
+    props: { posts },
+    revalidate: 60,
+  }
+}
